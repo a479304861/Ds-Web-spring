@@ -5,6 +5,7 @@ import java.io.OutputStream;
 import java.util.List;
 
 public class RunExeUtils {
+
     public static void openWinExe(String command) {
         Runtime rn = Runtime.getRuntime();
         Process p = null;
@@ -28,8 +29,7 @@ public class RunExeUtils {
 
 
     public static void openRun(List<String> param) throws InterruptedException, IOException {
-        Process process = null;
-        process = new ProcessBuilder(param).start();
+        Process process = new ProcessBuilder(param).start();
         System.out.println(process.isAlive());          //true
         process.waitFor();
         System.out.println(process.isAlive());           //false

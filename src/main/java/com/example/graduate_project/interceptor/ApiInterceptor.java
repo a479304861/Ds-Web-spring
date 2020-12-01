@@ -12,6 +12,7 @@ import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.reflect.Method;
 
@@ -33,22 +34,27 @@ public class ApiInterceptor extends HandlerInterceptorAdapter {
                     String remoteAddr = request.getRemoteAddr();
                     remoteAddr=remoteAddr.replace(':','-');
                         //TODO:
-                    String hasCommit = (String) redisUtil.get(ConstantUtils.User.KEY_COMMIT+remoteAddr);
-                    if (hasCommit!=null) {
-                        response.setCharacterEncoding("UTF-8");
-                        response.setContentType("application/json");
-                        ResponseResult responseResult = ResponseResult.FAILED("提交过于频繁");
-                        PrintWriter writer = response.getWriter();
-                        writer.write(gson.toJson(responseResult));
-                        writer.flush();
-                        System.out.println("提交太频繁了");
-                        return false;
-                    }else{
-                        redisUtil.set(ConstantUtils.User.KEY_COMMIT+remoteAddr,"true",30);
-                    }
+//                    if (redis(response, remoteAddr)) return false;
                 }
             }
         }
         return true; //true放 false 拦截
+    }
+
+    private boolean redis(HttpServletResponse response, String remoteAddr) throws IOException {
+        String hasCommit = (String) redisUtil.get(ConstantUtils.User.KEY_COMMIT+remoteAddr);
+        if (hasCommit!=null) {
+            response.setCharacterEncoding("UTF-8");
+            response.setContentType("application/json");
+            ResponseResult responseResult = ResponseResult.FAILED("提交过于频繁");
+            PrintWriter writer = response.getWriter();
+            writer.write(gson.toJson(responseResult));
+            writer.flush();
+            System.out.println("提交太频繁了");
+            return true;
+        }else{
+            redisUtil.set(ConstantUtils.User.KEY_COMMIT+remoteAddr,"true",30);
+        }
+        return false;
     }
 }

@@ -19,7 +19,7 @@ public class FileController {
 
     @CheckTooFrequentCommit
     @CrossOrigin(origins = "*", maxAge = 3600)
-    @RequestMapping(value = "/upload", method = RequestMethod.POST)
+    @PostMapping(value = "/upload")
     public ResponseResult uploadFile(@RequestParam("file") MultipartFile uploadFile) {
         return fileService.upload(uploadFile);
     }
@@ -27,9 +27,9 @@ public class FileController {
     @CheckTooFrequentCommit
     @CrossOrigin(origins = "*", maxAge = 3600)
     @GetMapping(value = "/getResult")
-    public ResponseResult getResult(@RequestParam("id") String id,
-                                    @RequestParam("cycleLengthThreshold") String cycleLengthThreshold,
-                                    @RequestParam("dustLengthThreshold") String dustLengthThreshold) {
+    public ResponseResult getResult(@RequestParam(value = "id",required = false) String id ,
+                                    @RequestParam(value = "cycleLengthThreshold",required = false) String cycleLengthThreshold,
+                                    @RequestParam(value = "dustLengthThreshold",required =  false) String dustLengthThreshold) {
         return fileService.getResult(id, cycleLengthThreshold, dustLengthThreshold);
     }
 
