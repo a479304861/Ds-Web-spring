@@ -58,12 +58,24 @@ public class FileServicesImpl implements  IFileService{
 
     @Override
     public ResponseResult getResult(String id, String cycleLengthThreshold, String dustLengthThreshold) {
-
+        if (cycleLengthThreshold==null) {
+            return ResponseResult.FAILED("参数不可以为空");
+        }
+        if (id==null) {
+            return ResponseResult.FAILED("参数不可以为空");
+        }
+        if (dustLengthThreshold==null) {
+            return ResponseResult.FAILED("参数不可以为空");
+        }
+        if(Integer.parseInt(cycleLengthThreshold)>100||Integer.parseInt(cycleLengthThreshold)<10){
+            return ResponseResult.FAILED("参数不正常");
+        }
+        if(Integer.parseInt(dustLengthThreshold)>10||Integer.parseInt(dustLengthThreshold)<5){
+            return ResponseResult.FAILED("参数不正常");
+        }
         List<String> param = new ArrayList<>();
-
-
         param.add( ConstantUtils.PROGRAM_PATH);
-        param.add(filePath+  File.separator  +id+".sequence");
+        param.add(id);
         param.add(cycleLengthThreshold);
         param.add(dustLengthThreshold);
         try{
