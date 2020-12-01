@@ -1,0 +1,19 @@
+server:
+  port: 8080
+spring:
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 50MB
+      max-request-size: 55MB
+  mvc:
+    servlet:
+      load-on-startup: 1
+  application:
+    name: Namosun_graduate_project
+  redis:
+    port: 6379
+    host: 127.0.0.1
+
+Namosun.graduate.file.save-path: E:\学习资料\IjDemo\graduate_project\file
+Namosun.graduate.file.max-size: 52428800

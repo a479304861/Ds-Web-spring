@@ -18,24 +18,6 @@ public class Swagger2Configuration {
      *
      * @return
      */
-    @Bean
-    public Docket portalApi() {
-        return new Docket(DocumentationType.SWAGGER_2)
-                .apiInfo(portalApiInfo())
-                .select()
-                .apis(RequestHandlerSelectors.basePackage("net.sunofbeach.blog.controller.portal"))
-                .paths(PathSelectors.any()) // 可以根据url路径设置哪些请求加入文档，忽略哪些请求
-                .build()
-                .groupName("前端门户");
-    }
-
-    private ApiInfo portalApiInfo() {
-        return new ApiInfoBuilder()
-                .title("阳光沙滩博客系统门户接口文档") //设置文档的标题
-                .description("门户接口文档") // 设置文档的描述
-                .version(VERSION) // 设置文档的版本信息-> 1.0.0 Version information
-                .build();
-    }
 
 
     /**
