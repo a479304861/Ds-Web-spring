@@ -1,7 +1,7 @@
 package com.example.graduate_project.service.impl;
 
-import com.example.graduate_project.dao.NamosunFileDao;
-import com.example.graduate_project.dao.enity.NamoSunFile;
+import com.example.graduate_project.dao.NamosunUserDao;
+import com.example.graduate_project.dao.enity.NamoSunUser;
 import com.example.graduate_project.dao.enity.ResponseResult;
 import com.example.graduate_project.utiles.ConstantUtils;
 import com.example.graduate_project.utiles.CookieUtils;
@@ -23,14 +23,14 @@ public class UserServiceImpl extends BaseService {
     private SnowflakeIdWorker idWorker;
 
     @Autowired
-    private NamosunFileDao fileDao;
+    private NamosunUserDao fileDao;
 
 
     public ResponseResult checkUser() {
         HttpServletRequest request = getRequest();
         HttpServletResponse response = getResponse();
         String cookie = CookieUtils.getCookie(request, ConstantUtils.NAMO_SUM_KEY);
-        List<NamoSunFile> allById = null;
+        List<NamoSunUser> allById = null;
         if (cookie == null) {
             //没有cookie
             cookie = idWorker.nextId() + "";

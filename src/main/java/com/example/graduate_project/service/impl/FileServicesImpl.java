@@ -1,7 +1,7 @@
 package com.example.graduate_project.service.impl;
 
-import com.example.graduate_project.dao.NamosunFileDao;
-import com.example.graduate_project.dao.enity.NamoSunFile;
+import com.example.graduate_project.dao.NamosunUserDao;
+import com.example.graduate_project.dao.enity.NamoSunUser;
 import com.example.graduate_project.dao.enity.ResponseResult;
 import com.example.graduate_project.dao.enity.Result;
 import com.example.graduate_project.utiles.*;
@@ -36,16 +36,16 @@ public class FileServicesImpl extends BaseService {
     public String OUT_PATH;
 
     @Autowired
-    private NamosunFileDao fileDao;
+    private NamosunUserDao fileDao;
 
     public ResponseResult upload(MultipartFile file) {
 
         if (file == null) {
             return ResponseResult.FAILED("上传失败，上传数据为空");
         }
-        String FileId = idWorker.nextId() + "";
+        String fileId = idWorker.nextId() + "";
         try {
-            String targetPath = filePath + File.separator + FileId + ".sequence";
+            String targetPath = filePath + File.separator + fileId + ".sequence";
             System.out.println(targetPath);
             File targetFile = new File(targetPath);
             if (!targetFile.getParentFile().exists()) {
@@ -67,18 +67,17 @@ public class FileServicesImpl extends BaseService {
         if (TextUtils.isEmpty(file.getName())) {
             return ResponseResult.FAILED("错误");
         }
-        NamoSunFile namoSunFile = new NamoSunFile();
+        NamoSunUser namoSunFile = new NamoSunUser();
+        namoSunFile.setId(fileId);
         namoSunFile.setComplete("0");
         namoSunFile.setCreateTime(new Date());
-        namoSunFile.setFileId(FileId);
         namoSunFile.setOriName(file.getOriginalFilename());
         namoSunFile.setUserId(cookie);
         fileDao.save(namoSunFile);
-        return ResponseResult.SUCCESS().setData(FileId);
-        //500,系统异常
+        return ResponseResult.SUCCESS().setData(fileId);
     }
 
-    public ResponseResult getResult(String FileId, String cycleLengthThreshold, String dustLengthThreshold, String index) {
+    public ResponseResult getResult(String FileId, String cycleLengthThreshold, String dustLengthThreshold, String countNum) {
         if (cycleLengthThreshold == null) {
             return ResponseResult.FAILED("参数不可以为空");
         }
@@ -107,8 +106,8 @@ public class FileServicesImpl extends BaseService {
             File blocks = new File(OUT_PATH + File.separator + FileId + File.separator + "blocks.txt");
             List<String> syntenyLists = fileToList(synteny);
             List<String> blocksList = fileToList(blocks);
-            NamoSunFile oneByFileId = fileDao.findOneByFileId(FileId);
-            oneByFileId.setIndex(index);
+            NamoSunUser oneByFileId = fileDao.findOneById(FileId);
+            oneByFileId.setCountNum(countNum);
             oneByFileId.setComplete("1");
             fileDao.save(oneByFileId);
             result = new Result(syntenyLists, blocksList);

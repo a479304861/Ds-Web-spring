@@ -26,8 +26,8 @@ public class FileController {
     public ResponseResult getResult(@RequestParam(value = "id") String id ,
                                     @RequestParam(value = "cycleLengthThreshold") String cycleLengthThreshold,
                                     @RequestParam(value = "dustLengthThreshold") String dustLengthThreshold,
-                                    @RequestParam(value = "index") String index) {
-        return fileService.getResult(id, cycleLengthThreshold, dustLengthThreshold,index);
+                                    @RequestParam(value = "countNum") String countNum) {
+        return fileService.getResult(id, cycleLengthThreshold, dustLengthThreshold,countNum);
     }
 
 

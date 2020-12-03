@@ -6,43 +6,31 @@ import javax.persistence.Table;
 import java.util.Date;
 
 @Entity
-@Table ( name ="tb_file" )
-public class NamoSunFile
-{
+@Table ( name ="tb_user" )
+public class NamoSunUser {
 
   	@Id
-	private String fileId;
+	private String id;
   	@Column(name = "ori_name" )
 	private String oriName;
   	@Column(name = "user_id" )
 	private String userId;
   	@Column(name = "complete" )
 	private String complete;
-  	@Column(name = "index" )
-	private String index;
-  	@Column(name = "animal_name" )
-	private String animalName;
   	@Column(name = "create_time" )
 	private Date createTime;
+  	@Column(name = "count_num" )
+	private String countNum;
+  	@Column(name = "animal_name" )
+	private String animalName;
 
-	public String getAnimalName() {
-		return animalName;
+
+	public String getId() {
+		return id;
 	}
 
-	public void setAnimalName(String animalName) {
-		this.animalName = animalName;
-	}
-
-	public String getIndex() {
-		return index;
-	}
-
-	public void setIndex(String index) {
-		this.index = index;
-	}
-
-	public NamoSunFile() {
-
+	public void setId(String id) {
+		this.id = id;
 	}
 
 
@@ -62,14 +50,6 @@ public class NamoSunFile
 		this.userId = userId;
 	}
 
-	public String getFileId() {
-		return fileId;
-	}
-
-	public void setFileId(String fileId) {
-		this.fileId = fileId;
-	}
-
 	public String getComplete() {
 		return complete;
 	}
@@ -84,5 +64,21 @@ public class NamoSunFile
 
 	public void setCreateTime(Date createTime) {
 		this.createTime = createTime;
+	}
+
+	public String getCountNum() {
+		return countNum;
+	}
+
+	public void setCountNum(String countNum) {
+		this.countNum = countNum;
+	}
+
+	public String getAnimalName() {
+		return animalName;
+	}
+
+	public void setAnimalName(String animalName) {
+		this.animalName = animalName;
 	}
 }
