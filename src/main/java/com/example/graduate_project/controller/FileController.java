@@ -22,13 +22,32 @@ public class FileController {
 
     @CheckTooFrequentCommit
     @CrossOrigin(origins = "*", maxAge = 3600)
-    @GetMapping(value = "/getResult")
-    public ResponseResult getResult(@RequestParam(value = "id") String id ,
+    @GetMapping(value = "/calculate")
+    public ResponseResult calculate(@RequestParam(value = "id") String id,
                                     @RequestParam(value = "cycleLengthThreshold") String cycleLengthThreshold,
                                     @RequestParam(value = "dustLengthThreshold") String dustLengthThreshold,
-                                    @RequestParam(value = "countNum") String countNum) {
-        return fileService.getResult(id, cycleLengthThreshold, dustLengthThreshold,countNum);
+                                    @RequestParam(value = "countNum") String countNum,
+                                    @RequestParam(value = "animalName") String animalName) {
+        return fileService.calculate(id, cycleLengthThreshold, dustLengthThreshold, countNum,animalName);
     }
 
+    @GetMapping(value = "/submit")
+    public ResponseResult submit(@RequestParam(value = "id") String id,
+                                    @RequestParam(value = "cycleLengthThreshold") String cycleLengthThreshold,
+                                    @RequestParam(value = "dustLengthThreshold") String dustLengthThreshold,
+                                    @RequestParam(value = "countNum") String countNum,
+                                    @RequestParam(value = "animalName") String animalName) {
+        return fileService.submit(id, cycleLengthThreshold, dustLengthThreshold, countNum,animalName);
+    }
+
+    @GetMapping(value = "/delete")
+    public ResponseResult delete(@RequestParam(value = "id") String id ) {
+        return fileService.delete(id);
+    }
+
+    @GetMapping(value = "/getResult")
+    public ResponseResult getResult(@RequestParam(value = "id") String id ) {
+        return fileService.getResult(id);
+    }
 
 }

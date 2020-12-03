@@ -77,44 +77,47 @@ public class FileServicesImpl extends BaseService {
         return ResponseResult.SUCCESS().setData(fileId);
     }
 
-    public ResponseResult getResult(String FileId, String cycleLengthThreshold, String dustLengthThreshold, String countNum) {
-        if (cycleLengthThreshold == null) {
-            return ResponseResult.FAILED("参数不可以为空");
-        }
-        if (FileId == null) {
-            return ResponseResult.FAILED("参数不可以为空");
-        }
-        if (dustLengthThreshold == null) {
-            return ResponseResult.FAILED("参数不可以为空");
-        }
-        if (Integer.parseInt(cycleLengthThreshold) > 100 || Integer.parseInt(cycleLengthThreshold) < 10) {
-            return ResponseResult.FAILED("参数不正常");
-        }
-        if (Integer.parseInt(dustLengthThreshold) > 10 || Integer.parseInt(dustLengthThreshold) < 5) {
-            return ResponseResult.FAILED("参数不正常");
+    public ResponseResult calculate(String FileId, String cycleLengthThreshold, String dustLengthThreshold, String countNum, String animalName) {
+        if (!checkResult(FileId, cycleLengthThreshold, dustLengthThreshold)) {
+            return ResponseResult.FAILED("输入不正确");
         }
         List<String> param = new ArrayList<>();
-
+        NamoSunUser oneByFileId = fileDao.findOneById(FileId);
         param.add(PROGRAM_PATH);
         param.add(FileId);
         param.add(cycleLengthThreshold);
         param.add(dustLengthThreshold);
-        Result result;
+
         try {
             RunExeUtils.openRun(param);
-            File synteny = new File(OUT_PATH + File.separator + FileId + File.separator + "synteny.txt");
-            File blocks = new File(OUT_PATH + File.separator + FileId + File.separator + "blocks.txt");
-            List<String> syntenyLists = fileToList(synteny);
-            List<String> blocksList = fileToList(blocks);
-            NamoSunUser oneByFileId = fileDao.findOneById(FileId);
+
             oneByFileId.setCountNum(countNum);
-            oneByFileId.setComplete("1");
+            oneByFileId.setAnimalName(animalName);
+            oneByFileId.setComplete("2");
             fileDao.save(oneByFileId);
-            result = new Result(syntenyLists, blocksList);
         } catch (Exception e) {
             return ResponseResult.FAILED("失败");
         }
-        return ResponseResult.SUCCESS().setData(result);
+        return ResponseResult.SUCCESS();
+    }
+
+    private boolean checkResult(String FileId, String cycleLengthThreshold, String dustLengthThreshold) {
+        if (cycleLengthThreshold == null) {
+            return false;
+        }
+        if (FileId == null) {
+            return false;
+        }
+        if (dustLengthThreshold == null) {
+            return false;
+        }
+        if (Integer.parseInt(cycleLengthThreshold) > 100 || Integer.parseInt(cycleLengthThreshold) < 10) {
+            return false ;
+        }
+        if (Integer.parseInt(dustLengthThreshold) > 10 || Integer.parseInt(dustLengthThreshold) < 5) {
+            return false;
+        }
+        return true;
     }
 
     private List<String> fileToList(File file) throws IOException {
@@ -138,4 +141,56 @@ public class FileServicesImpl extends BaseService {
     }
 
 
+    public ResponseResult submit(String FileId, String cycleLengthThreshold, String dustLengthThreshold, String countNum, String animalName) {
+        if (!checkResult(FileId, cycleLengthThreshold, dustLengthThreshold)) {
+            return ResponseResult.FAILED("输入不正确");
+        }
+        NamoSunUser oneByFileId = fileDao.findOneById(FileId);
+        oneByFileId.setComplete("1");
+        fileDao.save(oneByFileId);
+        return ResponseResult.SUCCESS("提交成功");
+    }
+
+    private static void delFile(File f){
+        if(!f.exists()){return;}//判断是否存在这个目录
+        File [] f_Arr=f.listFiles();//获取目录的所有路径表示的文件
+        if (f_Arr!=null){
+            for(File f_val : f_Arr){
+                //递归
+                if(f_val.isDirectory()){
+                    delFile(f_val);//递归调用自己
+                }
+                f_val.delete();//不是文件夹则删除该文件
+            }
+        }
+        f.delete();//删除该目录
+    }
+    public ResponseResult delete(String id) {
+        if(id==null){
+            return ResponseResult.FAILED("");
+        }
+        fileDao.deleteById(id);
+        String targetPath = filePath + File.separator + id + ".sequence";
+        String targetOutPath=OUT_PATH+File.separator+id;
+        File targetFile = new File(targetPath);
+        File file = new File(targetOutPath);
+        delFile(targetFile);
+        delFile(file);
+        return ResponseResult.SUCCESS("删除成功");
+    }
+
+    public ResponseResult getResult(String id) {
+        File synteny = new File(OUT_PATH + File.separator + id + File.separator + "synteny.txt");
+        File blocks = new File(OUT_PATH + File.separator + id + File.separator + "blocks.txt");
+        Result  result = null;
+        try {
+            List<String>  syntenyLists = fileToList(synteny);
+            List<String> blocksList = fileToList(blocks);
+            result = new Result(syntenyLists, blocksList);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return ResponseResult.FAILED();
+        }
+        return ResponseResult.SUCCESS().setData(result);
+    }
 }
