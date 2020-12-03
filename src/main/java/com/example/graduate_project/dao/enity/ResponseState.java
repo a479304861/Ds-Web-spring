@@ -1,4 +1,4 @@
-package com.example.graduate_project.dao;
+package com.example.graduate_project.dao.enity;
 
 public enum ResponseState {
    SUCCESS("操作成功",true,20000),

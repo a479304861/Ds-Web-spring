@@ -1,7 +1,7 @@
 package com.example.graduate_project.controller;
 
 
-import com.example.graduate_project.dao.ResponseResult;
+import com.example.graduate_project.dao.enity.ResponseResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 

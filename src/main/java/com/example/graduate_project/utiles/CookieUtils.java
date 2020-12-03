@@ -1,0 +1,60 @@
+package com.example.graduate_project.utiles;
+
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+public class CookieUtils {
+
+    public static final int DEFAULT_AGE = 60*60*24*365;
+
+    public static final String domain = "localhost";
+
+    public static void setUpCookie(HttpServletResponse response, String key, String value) {
+        setUpCookie(response, key, value,DEFAULT_AGE);
+    }
+
+    /**
+     * 設置cookie
+     * @param response
+     * @param key
+     * @param value
+     * @param age
+     */
+    public static void setUpCookie(HttpServletResponse response, String key, String value, int age) {
+        Cookie cookie = new Cookie(key, value);
+        cookie.setPath("/");
+        cookie.setDomain(domain);
+        cookie.setMaxAge(age);
+        response.addCookie(cookie);
+    }
+
+    /**
+     * 刪除cookie
+     * @param response
+     * @param key
+     */
+    public static void  deleteCookie(HttpServletResponse response,String key){
+        setUpCookie(response,key,null,0);
+    }
+
+    /**
+     * 獲取cookie
+     * @param request
+     * @param key
+     * @return
+     */
+    public static String getCookie(HttpServletRequest request, String key){
+        Cookie[] cookies = request.getCookies();
+        if (cookies==null){
+            return null;
+        }
+        for (Cookie cookie : cookies) {
+            if(cookie.getName().equals(key)){
+                return cookie.getValue();
+            }
+        }
+        return null;
+    }
+
+}

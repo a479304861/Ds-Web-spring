@@ -1,4 +1,4 @@
-package com.example.graduate_project.dao;
+package com.example.graduate_project.dao.enity;
 
 public class ResponseResult {
     private String message;

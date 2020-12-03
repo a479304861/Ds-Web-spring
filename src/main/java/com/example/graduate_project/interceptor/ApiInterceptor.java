@@ -1,7 +1,7 @@
 package com.example.graduate_project.interceptor;
 
 
-import com.example.graduate_project.dao.ResponseResult;
+import com.example.graduate_project.dao.enity.ResponseResult;
 import com.example.graduate_project.utiles.ConstantUtils;
 import com.example.graduate_project.utiles.RedisUtil;
 import com.google.gson.Gson;

@@ -1,25 +1,27 @@
-package com.example.graduate_project.service;
+package com.example.graduate_project.service.impl;
 
-import com.example.graduate_project.dao.ResponseResult;
-import com.example.graduate_project.dao.Result;
-import com.example.graduate_project.utiles.ConstantUtils;
-import com.example.graduate_project.utiles.RunExeUtils;
-import com.example.graduate_project.utiles.SnowflakeIdWorker;
-import com.example.graduate_project.utiles.TextUtils;
+import com.example.graduate_project.dao.NamosunFileDao;
+import com.example.graduate_project.dao.enity.NamoSunFile;
+import com.example.graduate_project.dao.enity.ResponseResult;
+import com.example.graduate_project.dao.enity.Result;
+import com.example.graduate_project.utiles.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.transaction.Transactional;
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 
 @Service
 @Transactional
-public class FileServicesImpl implements IFileService {
+@Primary
+public class FileServicesImpl extends BaseService {
 
     @Autowired
     private SnowflakeIdWorker idWorker;
@@ -27,14 +29,23 @@ public class FileServicesImpl implements IFileService {
     @Value("${Namosun.graduate.file.save-path}")
     public String filePath;
 
-    @Override
+    @Value("${Namosun.graduate.program-path}")
+    public String PROGRAM_PATH;
+
+    @Value("${Namosun.graduate.out-path}")
+    public String OUT_PATH;
+
+    @Autowired
+    private NamosunFileDao fileDao;
+
     public ResponseResult upload(MultipartFile file) {
+
+        if (file == null) {
+            return ResponseResult.FAILED("上传失败，上传数据为空");
+        }
+        String FileId = idWorker.nextId() + "";
         try {
-            if (file == null) {
-                return ResponseResult.FAILED("上传失败，上传数据为空");
-            }
-            String id = idWorker.nextId() + "";
-            String targetPath = filePath + File.separator + id + ".sequence";
+            String targetPath = filePath + File.separator + FileId + ".sequence";
             System.out.println(targetPath);
             File targetFile = new File(targetPath);
             if (!targetFile.getParentFile().exists()) {
@@ -42,23 +53,36 @@ public class FileServicesImpl implements IFileService {
             }
             try {
                 file.transferTo(targetFile);
-                return ResponseResult.SUCCESS().setData(id);
+                //保存文件在数据库
             } catch (Exception e) {
                 return ResponseResult.FAILED("上传失败,请稍后重试");
             }
         } catch (Exception e) {
             return ResponseResult.FAILED("系统异常，上传失败");
         }
+        String cookie = CookieUtils.getCookie(getRequest(), ConstantUtils.NAMO_SUM_KEY);
+        if (cookie == null) {
+            return ResponseResult.FAILED("错误");
+        }
+        if (TextUtils.isEmpty(file.getName())) {
+            return ResponseResult.FAILED("错误");
+        }
+        NamoSunFile namoSunFile = new NamoSunFile();
+        namoSunFile.setComplete("0");
+        namoSunFile.setCreateTime(new Date());
+        namoSunFile.setFileId(FileId);
+        namoSunFile.setOriName(file.getOriginalFilename());
+        namoSunFile.setUserId(cookie);
+        fileDao.save(namoSunFile);
+        return ResponseResult.SUCCESS().setData(FileId);
         //500,系统异常
     }
 
-
-    @Override
-    public ResponseResult getResult(String id, String cycleLengthThreshold, String dustLengthThreshold) {
+    public ResponseResult getResult(String FileId, String cycleLengthThreshold, String dustLengthThreshold, String index) {
         if (cycleLengthThreshold == null) {
             return ResponseResult.FAILED("参数不可以为空");
         }
-        if (id == null) {
+        if (FileId == null) {
             return ResponseResult.FAILED("参数不可以为空");
         }
         if (dustLengthThreshold == null) {
@@ -71,17 +95,22 @@ public class FileServicesImpl implements IFileService {
             return ResponseResult.FAILED("参数不正常");
         }
         List<String> param = new ArrayList<>();
-        param.add(ConstantUtils.PROGRAM_PATH);
-        param.add(id);
+
+        param.add(PROGRAM_PATH);
+        param.add(FileId);
         param.add(cycleLengthThreshold);
         param.add(dustLengthThreshold);
         Result result;
         try {
             RunExeUtils.openRun(param);
-            File synteny = new File(ConstantUtils.OUT_PATH + File.separator + id + File.separator + "synteny.txt");
-            File blocks = new File(ConstantUtils.OUT_PATH + File.separator + id + File.separator + "blocks.txt");
+            File synteny = new File(OUT_PATH + File.separator + FileId + File.separator + "synteny.txt");
+            File blocks = new File(OUT_PATH + File.separator + FileId + File.separator + "blocks.txt");
             List<String> syntenyLists = fileToList(synteny);
             List<String> blocksList = fileToList(blocks);
+            NamoSunFile oneByFileId = fileDao.findOneByFileId(FileId);
+            oneByFileId.setIndex(index);
+            oneByFileId.setComplete("1");
+            fileDao.save(oneByFileId);
             result = new Result(syntenyLists, blocksList);
         } catch (Exception e) {
             return ResponseResult.FAILED("失败");
@@ -95,22 +124,19 @@ public class FileServicesImpl implements IFileService {
         return TextUtils.toList(result);
     }
 
-
     private String readFile(File file) throws IOException {
-        try{
+        try {
             InputStream is = new FileInputStream(file);
             int iAvail = is.available();
             byte[] bytes = new byte[iAvail];
             is.read(bytes);
             is.close();
             return new String(bytes);
-        }catch(Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
-      return null;
+        return null;
     }
-
-
 
 
 }

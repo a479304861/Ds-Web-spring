@@ -1,7 +1,7 @@
 package com.example.graduate_project.utiles;
 
 import java.io.IOException;
-import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.List;
 
 public class RunExeUtils {
@@ -35,4 +35,23 @@ public class RunExeUtils {
         System.out.println(process.isAlive());           //false
 
     }
+
+    public static void main(String[] args) {
+        List<String> param = new ArrayList<>();
+        param.add("mono");
+        param.add("Program.exe");
+        param.add("123456789");
+        param.add("20");
+        param.add("8");
+        try {
+            Process process = new ProcessBuilder(param).start();
+            System.out.println(process.isAlive());     //true
+            process.waitFor();
+            System.out.println(process.isAlive());
+        } catch (Exception   e) {
+            e.printStackTrace();
+        }
+    }
+
+
 }

@@ -3,6 +3,8 @@ package com.example.graduate_project;
 import com.example.graduate_project.utiles.RedisUtil;
 import com.example.graduate_project.utiles.SnowflakeIdWorker;
 import com.google.gson.Gson;
+import org.mapstruct.Mapper;
+import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
