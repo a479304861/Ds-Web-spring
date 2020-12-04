@@ -11,4 +11,5 @@ public interface NamosunUserDao extends JpaRepository<NamoSunUser,String>, JpaSp
 
     List<NamoSunUser> findAllByUserId(String userId);
     NamoSunUser findOneById(String fileId);
+
 }

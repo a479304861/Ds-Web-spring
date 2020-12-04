@@ -14,6 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -182,11 +183,37 @@ public class FileServicesImpl extends BaseService {
     public ResponseResult getResult(String id) {
         File synteny = new File(OUT_PATH + File.separator + id + File.separator + "synteny.txt");
         File blocks = new File(OUT_PATH + File.separator + id + File.separator + "blocks.txt");
+
         Result  result = null;
         try {
             List<String>  syntenyLists = fileToList(synteny);
             List<String> blocksList = fileToList(blocks);
-            result = new Result(syntenyLists, blocksList);
+            NamoSunUser oneById = fileDao.findOneById(id);
+            String animalName = oneById.getAnimalName();
+            String countNum = oneById.getCountNum();
+            List<List<String>> syntenyListsList=new ArrayList<>();
+            List<String> syntenyNum=new ArrayList<>();
+            List<List<String>> blocksListList=new ArrayList<>();
+
+            for (String s : blocksList) {
+                List<String> strings = new ArrayList<>(Arrays.asList(s.split(" ")));
+                blocksListList.add(strings);
+            }
+            for (String s : syntenyLists) {
+                List<String> temp = new ArrayList<>(Arrays.asList(s.split(":")));
+
+                List<String> strings = new ArrayList<>(Arrays.asList(temp.get(1).split(" ")));
+                syntenyNum.add(strings.get(0));
+                temp.clear();
+                for (int i = 1; i < strings.size(); i++) {
+                    temp.add(strings.get(i));
+                }
+                syntenyListsList.add(temp);
+            }
+            List<String> countNumList = TextUtils.splitList(countNum);
+            List<String> animalNameList = TextUtils.splitList(animalName);
+
+            result = new Result(syntenyListsList,syntenyNum,blocksListList, countNumList,animalNameList);
         } catch (IOException e) {
             e.printStackTrace();
             return ResponseResult.FAILED();
