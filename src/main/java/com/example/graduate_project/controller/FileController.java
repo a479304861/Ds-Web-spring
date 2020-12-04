@@ -3,9 +3,21 @@ package com.example.graduate_project.controller;
 import com.example.graduate_project.dao.enity.ResponseResult;
 import com.example.graduate_project.interceptor.CheckTooFrequentCommit;
 import com.example.graduate_project.service.impl.FileServicesImpl;
+import org.h2.store.fs.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 
 @RestController("/file")
 public class FileController {
@@ -48,6 +60,12 @@ public class FileController {
     @GetMapping(value = "/getResult")
     public ResponseResult getResult(@RequestParam(value = "id" ,required = false) String id ) {
         return fileService.getResult(id);
+    }
+
+    @GetMapping("/download")
+    public ResponseEntity<byte[]> download(@RequestParam(value = "id" ,required = false) String id ,
+                                           @RequestParam(value = "fileName")String fileName )  {
+        return fileService.download(id,fileName);
     }
 
 }

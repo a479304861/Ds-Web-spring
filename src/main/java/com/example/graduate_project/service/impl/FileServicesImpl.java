@@ -8,6 +8,9 @@ import com.example.graduate_project.utiles.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -225,5 +228,30 @@ public class FileServicesImpl extends BaseService {
             return ResponseResult.FAILED();
         }
         return ResponseResult.SUCCESS().setData(result);
+    }
+
+    public ResponseEntity<byte[]> download(String id, String fileName) {
+        if(id==null){
+            id = CookieUtils.getCookie(getRequest(), ConstantUtils.NAMO_SUM_RESULT_KEY);
+            if(id==null){
+                return null;
+            }
+        }
+        String targetOutPath=OUT_PATH+File.separator+id+File.separator+fileName+".txt";
+        File file = new File(targetOutPath);
+        byte[] body = null;
+        InputStream is = null;
+        try {
+            is = new FileInputStream(file);
+            body = new byte[is.available()];
+            is.read(body);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Content-Disposition", "attchement;filename=" + file.getName());
+        HttpStatus statusCode = HttpStatus.OK;
+        ResponseEntity<byte[]> entity = new ResponseEntity<byte[]>(body, headers, statusCode);
+        return entity;
     }
 }

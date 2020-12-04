@@ -38,7 +38,6 @@ public class UserServiceImpl extends BaseService {
         } else {
             allById = fileDao.findAllByUserId(cookie);
         }
-        //TODO：从数据库取出当前的序列
         return ResponseResult.SUCCESS().setData(allById);
     }
 }
