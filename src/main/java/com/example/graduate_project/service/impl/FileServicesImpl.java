@@ -181,6 +181,12 @@ public class FileServicesImpl extends BaseService {
     }
 
     public ResponseResult getResult(String id) {
+        if(id==null){
+            id = CookieUtils.getCookie(getRequest(), ConstantUtils.NAMO_SUM_RESULT_KEY);
+            if(id==null){
+                return ResponseResult.FAILED();
+            }
+        }
         File synteny = new File(OUT_PATH + File.separator + id + File.separator + "synteny.txt");
         File blocks = new File(OUT_PATH + File.separator + id + File.separator + "blocks.txt");
 
@@ -212,8 +218,8 @@ public class FileServicesImpl extends BaseService {
             }
             List<String> countNumList = TextUtils.splitList(countNum);
             List<String> animalNameList = TextUtils.splitList(animalName);
-
-            result = new Result(syntenyListsList,syntenyNum,blocksListList, countNumList,animalNameList);
+            CookieUtils.setUpCookie(getResponse(),ConstantUtils.NAMO_SUM_RESULT_KEY,id);
+            result = new Result(syntenyListsList,syntenyNum,blocksListList,animalNameList,countNumList);
         } catch (IOException e) {
             e.printStackTrace();
             return ResponseResult.FAILED();

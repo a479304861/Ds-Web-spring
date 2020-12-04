@@ -46,7 +46,7 @@ public class FileController {
     }
 
     @GetMapping(value = "/getResult")
-    public ResponseResult getResult(@RequestParam(value = "id") String id ) {
+    public ResponseResult getResult(@RequestParam(value = "id" ,required = false) String id ) {
         return fileService.getResult(id);
     }
 
