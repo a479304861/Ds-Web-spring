@@ -10,13 +10,23 @@ public class Result {
     private List<List<String>> blocks;
     private List<String> animalName;
     private List<String> countNum;
+    private List<String> splitChoseAnimalName;
 
-    public Result(List<List<String>> synteny, List<String> syntenyNum, List<List<String>> blocks, List<String> animalName, List<String> countNum) {
+    public Result(List<List<String>> synteny, List<String> syntenyNum, List<List<String>> blocks, List<String> animalName, List<String> countNum, List<String> splitChoseAnimalName) {
         this.synteny = synteny;
         this.syntenyNum = syntenyNum;
         this.blocks = blocks;
         this.animalName = animalName;
         this.countNum = countNum;
+        this.splitChoseAnimalName = splitChoseAnimalName;
+    }
+
+    public List<String> getSplitChoseAnimalName() {
+        return splitChoseAnimalName;
+    }
+
+    public void setSplitChoseAnimalName(List<String> splitChoseAnimalName) {
+        this.splitChoseAnimalName = splitChoseAnimalName;
     }
 
     public List<List<String>> getSynteny() {

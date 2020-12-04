@@ -25,7 +25,10 @@ public class UserServiceImpl extends BaseService {
     @Autowired
     private NamosunUserDao fileDao;
 
-
+    /**
+     * 验证用户cookie看是否登入过，如果没有，生成一个id给用户
+     * @return
+     */
     public ResponseResult checkUser() {
         HttpServletRequest request = getRequest();
         HttpServletResponse response = getResponse();

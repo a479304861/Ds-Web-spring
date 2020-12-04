@@ -13,18 +13,7 @@ import springfox.documentation.spring.web.plugins.Docket;
 public class Swagger2Configuration {
     public static final String VERSION = "1.0.0";
 
-    /**
-     * 门户api，接口前缀：portal
-     *
-     * @return
-     */
 
-
-    /**
-     * 管理中心api，接口前缀：admin
-     *
-     * @return
-     */
     @Bean
     public Docket adminApi() {
         return new Docket(DocumentationType.SWAGGER_2)

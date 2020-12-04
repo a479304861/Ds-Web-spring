@@ -40,32 +40,38 @@ public class FileController {
                                     @RequestParam(value = "dustLengthThreshold") String dustLengthThreshold,
                                     @RequestParam(value = "countNum") String countNum,
                                     @RequestParam(value = "animalName") String animalName) {
-        return fileService.calculate(id, cycleLengthThreshold, dustLengthThreshold, countNum,animalName);
+        return fileService.calculate(id, cycleLengthThreshold, dustLengthThreshold, countNum, animalName);
     }
 
     @GetMapping(value = "/submit")
     public ResponseResult submit(@RequestParam(value = "id") String id,
-                                    @RequestParam(value = "cycleLengthThreshold") String cycleLengthThreshold,
-                                    @RequestParam(value = "dustLengthThreshold") String dustLengthThreshold,
-                                    @RequestParam(value = "countNum") String countNum,
-                                    @RequestParam(value = "animalName") String animalName) {
-        return fileService.submit(id, cycleLengthThreshold, dustLengthThreshold, countNum,animalName);
+                                 @RequestParam(value = "cycleLengthThreshold") String cycleLengthThreshold,
+                                 @RequestParam(value = "dustLengthThreshold") String dustLengthThreshold,
+                                 @RequestParam(value = "countNum") String countNum,
+                                 @RequestParam(value = "animalName") String animalName) {
+        return fileService.submit(id, cycleLengthThreshold, dustLengthThreshold, countNum, animalName);
     }
 
     @GetMapping(value = "/delete")
-    public ResponseResult delete(@RequestParam(value = "id") String id ) {
+    public ResponseResult delete(@RequestParam(value = "id") String id) {
         return fileService.delete(id);
     }
 
     @GetMapping(value = "/getResult")
-    public ResponseResult getResult(@RequestParam(value = "id" ,required = false) String id ) {
+    public ResponseResult getResult(@RequestParam(value = "id", required = false) String id) {
         return fileService.getResult(id);
     }
 
+    @GetMapping(value = "/getComp")
+    public ResponseResult getComp(@RequestParam(value = "id", required = false) String id,
+                                  @RequestParam(value = "animalName", required = false) String animalName) {
+        return fileService.getComp(id, animalName);
+    }
+
     @GetMapping("/download")
-    public ResponseEntity<byte[]> download(@RequestParam(value = "id" ,required = false) String id ,
-                                           @RequestParam(value = "fileName")String fileName )  {
-        return fileService.download(id,fileName);
+    public ResponseEntity<byte[]> download(@RequestParam(value = "id", required = false) String id,
+                                           @RequestParam(value = "fileName") String fileName) {
+        return fileService.download(id, fileName);
     }
 
 }
