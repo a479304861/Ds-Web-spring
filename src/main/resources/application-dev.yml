@@ -1,7 +1,6 @@
 server:
   port: 8080
 spring:
-
   servlet:
     multipart:
       enabled: true

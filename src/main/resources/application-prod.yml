@@ -21,6 +21,8 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: root
     password: qqwwee123
+  main:
+    allow-bean-definition-overriding: true
 
 Namosun.graduate.file.save-path: E:\学习资料\IjDemo\graduate_project\file
 Namosun.graduate.program-path:  G:\桌面\毕设\textDemo\drimm\bin\Release\netcoreapp2.1\win-x64\drimm.exe

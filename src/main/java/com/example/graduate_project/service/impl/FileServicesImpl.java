@@ -58,7 +58,6 @@ public class FileServicesImpl extends BaseService {
         String fileId = idWorker.nextId() + "";
         try {
             String targetPath = INPUT_PATH + File.separator + fileId + ".sequence";
-            System.out.println(targetPath);
             File targetFile = new File(targetPath);
             if (!targetFile.getParentFile().exists()) {
                 targetFile.getParentFile().mkdirs();
@@ -103,31 +102,86 @@ public class FileServicesImpl extends BaseService {
         if (!checkParams(fileId, cycleLengthThreshold, dustLengthThreshold)) {
             return ResponseResult.FAILED("输入不正确");
         }
-        List<String> param = new ArrayList<>();
+
         NamoSunUser oneByFileId = fileDao.findOneById(fileId);
-        if(oneByFileId==null){
+        if (oneByFileId == null) {
             return ResponseResult.FAILED("请稍后重试");
         }
-        if(isLinux){
-            param.add("mono");
-        }
-        param.add(PROGRAM_PATH);
-        param.add(fileId);
-        param.add(cycleLengthThreshold);
-        param.add(dustLengthThreshold);
 
         try {
+            //执行C#
+            List<String> param = new ArrayList<>();
+            if (isLinux) {
+                param.add("mono");
+            }
+            param.add(PROGRAM_PATH);
+            param.add(fileId);
+            param.add(cycleLengthThreshold);
+            param.add(dustLengthThreshold);
             RunExeUtils.openRun(param);
-            oneByFileId.setComplete("2");
-            oneByFileId.setAnimalName(animalName);
-            oneByFileId.setCountNum(countNum);
-            oneByFileId.setCycleLengthThreshold(cycleLengthThreshold);
-            oneByFileId.setDustLengthThreshold(dustLengthThreshold);
-            fileDao.save(oneByFileId);
         } catch (Exception e) {
             return ResponseResult.FAILED("失败");
         }
+        //储存到数据库
+        oneByFileId.setComplete("2");
+        oneByFileId.setAnimalName(animalName);
+        oneByFileId.setCountNum(countNum);
+        oneByFileId.setCycleLengthThreshold(cycleLengthThreshold);
+        oneByFileId.setDustLengthThreshold(dustLengthThreshold);
+        fileDao.save(oneByFileId);
+
+
+        //TODO：储存分开的文件
+        try {
+            //读取block
+            String blockString = readFile(new File(OUT_PATH + File.separator + fileId + File.separator + "blocks.txt"));
+            String modifiedString = readFile(new File(OUT_PATH + File.separator + fileId + File.separator + "modifiedSequence.txt"));
+            List<String> countNumSplitCross = TextUtils.splitCross(countNum);
+            List<String> animalNameSplitCross = TextUtils.splitCross(animalName);
+            writeToFileByAnimal(blockString, fileId, countNumSplitCross, animalNameSplitCross, "block");
+            writeToFileByAnimal(modifiedString, fileId, countNumSplitCross, animalNameSplitCross, "modifiedSequence");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        //读取modifyList
+
+        //写入各个动物的读取modifyList
         return ResponseResult.SUCCESS();
+    }
+
+    public void writeToFileByAnimal(String writeString, String fileId, List<String> countNumSplitCross, List<String> animalNameSplitCross, String last) {
+        assert writeString != null;
+        List<String> blockList = TextUtils.splitEnter(writeString);
+
+        int nowIndex = 0;
+        //获得listByAnimal
+        List<List<String>> ListByAnimal = new ArrayList<>();
+        for (String numSplitCross : countNumSplitCross) {
+            List<String> temp = new ArrayList<>();
+            for (int j = nowIndex; j < nowIndex + Integer.parseInt(numSplitCross); j++) {
+                temp.add(blockList.get(j));
+            }
+            ListByAnimal.add(temp);
+            nowIndex += Integer.parseInt(numSplitCross);
+        }
+        //按照物种生成文件
+        for (int i = 0; i < animalNameSplitCross.size(); i++) {
+            StringBuilder stringBuilder = new StringBuilder();
+            for (String list : ListByAnimal.get(i)) {
+                stringBuilder.append(list);
+                if (ListByAnimal.get(i).indexOf(list)!=ListByAnimal.get(i).size()-1){
+                    stringBuilder.append("\r\n");
+                }
+            }
+            try {
+                stringWriteToFile(OUT_PATH + File.separator + fileId + File.separator + last+"_"+ animalNameSplitCross.get(i)+".txt" ,
+                        stringBuilder.toString());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
     }
 
 
@@ -181,7 +235,7 @@ public class FileServicesImpl extends BaseService {
             return ResponseResult.FAILED("输入不正确");
         }
         File file = new File(INPUT_PATH + File.separator + fileId + ".sequence");
-        if(!file.exists()||fileDao.findOneById(fileId)==null){
+        if (!file.exists() || fileDao.findOneById(fileId) == null) {
             return ResponseResult.FAILED("请刷新重试");
         }
         try {
@@ -194,14 +248,14 @@ public class FileServicesImpl extends BaseService {
                 countNumAll += Integer.parseInt(s);
             }
             if (fileList.size() != countNumAll) {
-                return ResponseResult.FAILED();
+                return ResponseResult.FAILED("文件基因总条数和输入不匹配");
             }
         } catch (IOException e) {
             e.printStackTrace();
             return ResponseResult.FAILED();
         }
         NamoSunUser oneByFileId = fileDao.findOneById(fileId);
-        if(oneByFileId==null){
+        if (oneByFileId == null) {
             return ResponseResult.FAILED("请稍后重试");
         }
         oneByFileId.setAnimalName(animalName);
@@ -239,7 +293,7 @@ public class FileServicesImpl extends BaseService {
         if (id == null) {
             return ResponseResult.FAILED("");
         }
-        if(fileDao.findOneById(id)==null){
+        if (fileDao.findOneById(id) == null) {
             return ResponseResult.FAILED("请稍微重试");
         }
         fileDao.deleteById(id);
@@ -270,7 +324,7 @@ public class FileServicesImpl extends BaseService {
             }
         }
         if (fileDao.findOneById(id) == null) {
-            return ResponseResult.FAILED("请刷新重试");
+            return ResponseResult.FAILED("数据不存在,请刷新后重试");
         }
         Result result = null;
         try {
@@ -296,7 +350,7 @@ public class FileServicesImpl extends BaseService {
             result = new Result(syntenyListsList, syntenyNum, blocksListList, animalNameList, countNumList, splitChoseAnimalName);
         } catch (IOException e) {
             e.printStackTrace();
-            return ResponseResult.FAILED();
+            return ResponseResult.FAILED("错误，请刷新后重试");
         }
         return ResponseResult.SUCCESS().setData(result);
     }
@@ -365,8 +419,14 @@ public class FileServicesImpl extends BaseService {
                 return null;
             }
         }
+        if(fileDao.findOneById(id)==null){
+            return null;
+        }
         String targetOutPath = OUT_PATH + File.separator + id + File.separator + fileName + ".txt";
         File file = new File(targetOutPath);
+        if(!file.exists()){
+            return null;
+        }
         byte[] body = null;
         InputStream is = null;
         try {
@@ -395,7 +455,7 @@ public class FileServicesImpl extends BaseService {
         if (id == null) {
             id = CookieUtils.getCookie(getRequest(), ConstantUtils.NAMO_SUM_RESULT_KEY);
             if (id == null) {
-                return ResponseResult.FAILED();
+                return ResponseResult.FAILED("请刷新后重试");
             }
         }
         //如果id已经被清空
@@ -514,30 +574,24 @@ public class FileServicesImpl extends BaseService {
             }
             writeToFile.append(" ");
         }
-
-
-        FileWriter writer;
-        FileWriter writer1;
-        FileWriter writer2;
         try {
-            writer = new FileWriter(targetOutPath);
-            writer.write(writeToFile.toString());
-            writer1 = new FileWriter(firstOutPath);
-            writer1.write(markListToString(markLineDataFirst));
-            writer2 = new FileWriter(secondOutPath);
-            writer2.write(markListToString(markLineDataSecond));
-            writer.flush();
-            writer.close();
-            writer1.flush();
-            writer1.close();
-            writer2.flush();
-            writer2.close();
+            stringWriteToFile(targetOutPath, writeToFile.toString());
+            stringWriteToFile(firstOutPath, markListToString(markLineDataFirst));
+            stringWriteToFile(secondOutPath, markListToString(markLineDataSecond));
+
         } catch (IOException e) {
             e.printStackTrace();
         }
 
         CookieUtils.setUpCookie(getResponse(), ConstantUtils.NAMO_SUM_ANIMAL_NAME_KEY, id + ":" + animalName);
         return ResponseResult.SUCCESS().setData(new DetailResult(simpleGraph(graph), markLineDataFirst, markLineDataSecond));
+    }
+
+    public void stringWriteToFile(String targetOutPath, String string) throws IOException {
+        FileWriter writer = new FileWriter(targetOutPath);
+        writer.write(string);
+        writer.flush();
+        writer.close();
     }
 
     private List<List<String>> simpleGraph(List<List<String>> graph) {
