@@ -220,12 +220,12 @@ public class FileServicesImpl extends BaseService {
             return ResponseResult.FAILED("");
         }
         fileDao.deleteById(id);
-        String targetPath = filePath + File.separator + id + ".sequence";
+        String targetInputPath = filePath + File.separator + id + ".sequence";
         String targetOutPath = OUT_PATH + File.separator + id;
-        File targetFile = new File(targetPath);
-        File file = new File(targetOutPath);
-        delFile(targetFile);
-        delFile(file);
+        File inputFile = new File(targetInputPath);
+        File outputFile = new File(targetOutPath);
+        delFile(inputFile);
+        delFile(outputFile);
         return ResponseResult.SUCCESS("删除成功");
     }
 
@@ -404,7 +404,6 @@ public class FileServicesImpl extends BaseService {
                     graph.add(splitCross);
                 }
                 CookieUtils.setUpCookie(getResponse(), ConstantUtils.NAMO_SUM_ANIMAL_NAME_KEY, id + ":" + animalName);
-                //TODO:获得list
                 File fileFirst = new File(firstOutPath);
                 File fileSecond = new File(secondOutPath);
                 String fileFirstList = readFile(fileFirst);
@@ -413,7 +412,7 @@ public class FileServicesImpl extends BaseService {
                 List<String> splitFirstList = TextUtils.splitCross(fileFirstList);
                 assert fileSecondList != null;
                 List<String> splitSecondList = TextUtils.splitCross(fileSecondList);
-                return ResponseResult.SUCCESS().setData(new DetailResult(graph,splitFirstList,splitSecondList));
+                return ResponseResult.SUCCESS().setData(new DetailResult(simpleGraph(graph),splitFirstList,splitSecondList));
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -503,8 +502,21 @@ public class FileServicesImpl extends BaseService {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
         CookieUtils.setUpCookie(getResponse(), ConstantUtils.NAMO_SUM_ANIMAL_NAME_KEY, id + ":" + animalName);
-        return ResponseResult.SUCCESS().setData(new DetailResult(graph,markLineDataFirst,markLineDataSecond));
+        return ResponseResult.SUCCESS().setData(new DetailResult(simpleGraph(graph),markLineDataFirst,markLineDataSecond));
+    }
+
+    private List<List<String>> simpleGraph(List<List<String>> graph) {
+        List<List<String>> result=  new ArrayList<>();
+        if(graph.size()<2000){
+            return  graph;
+        }
+        int step=graph.size()/2000;
+        for (int i = 0; i < graph.size(); i+=step) {
+            result.add(graph.get(i));
+        }
+        return result;
     }
 
     private String markListToString(List<String> markLineData) {
