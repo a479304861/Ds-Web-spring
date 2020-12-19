@@ -9,12 +9,12 @@ import org.springframework.stereotype.Component;
 @Component
 public class ScheduledTasks {
 
-    @Autowired
-    private FileServicesImpl fileServices;
-
-    @Scheduled(fixedRate = ConstantUtils.DELETE_TIME)
-    public void task() {
-        System.out.println("deleteAll");
-        fileServices.deleteAll();
-    }
+//    @Autowired
+//    private FileServicesImpl fileServices;
+//
+//    @Scheduled(fixedRate = ConstantUtils.DELETE_TIME)
+//    public void task() {
+//        System.out.println("deleteAll");
+//        fileServices.deleteAll();
+//    }
 }
