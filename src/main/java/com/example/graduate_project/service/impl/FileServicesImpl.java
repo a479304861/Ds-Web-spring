@@ -26,11 +26,12 @@ import java.util.*;
 @Primary
 public class FileServicesImpl extends BaseService {
 
+
     @Autowired
     private SnowflakeIdWorker idWorker;
 
     @Value("${Namosun.graduate.file.save-path}")
-    public String filePath;
+    public String INPUT_PATH;
 
     @Value("${Namosun.graduate.program-path}")
     public String PROGRAM_PATH;
@@ -38,11 +39,15 @@ public class FileServicesImpl extends BaseService {
     @Value("${Namosun.graduate.out-path}")
     public String OUT_PATH;
 
+    @Value("${Namosun.graduate.isLinux}")
+    public boolean isLinux;
+
     @Autowired
     private NamosunUserDao fileDao;
 
     /**
      * 上传
+     *
      * @param file
      * @return
      */
@@ -52,7 +57,7 @@ public class FileServicesImpl extends BaseService {
         }
         String fileId = idWorker.nextId() + "";
         try {
-            String targetPath = filePath + File.separator + fileId + ".sequence";
+            String targetPath = INPUT_PATH + File.separator + fileId + ".sequence";
             System.out.println(targetPath);
             File targetFile = new File(targetPath);
             if (!targetFile.getParentFile().exists()) {
@@ -86,21 +91,28 @@ public class FileServicesImpl extends BaseService {
 
     /**
      * 计算
-     * @param FileId
+     *
+     * @param fileId
      * @param cycleLengthThreshold
      * @param dustLengthThreshold
      * @param countNum
      * @param animalName
      * @return
      */
-    public ResponseResult calculate(String FileId, String cycleLengthThreshold, String dustLengthThreshold, String countNum, String animalName) {
-        if (!checkResult(FileId, cycleLengthThreshold, dustLengthThreshold)) {
+    public ResponseResult calculate(String fileId, String cycleLengthThreshold, String dustLengthThreshold, String countNum, String animalName) {
+        if (!checkParams(fileId, cycleLengthThreshold, dustLengthThreshold)) {
             return ResponseResult.FAILED("输入不正确");
         }
         List<String> param = new ArrayList<>();
-        NamoSunUser oneByFileId = fileDao.findOneById(FileId);
+        NamoSunUser oneByFileId = fileDao.findOneById(fileId);
+        if(oneByFileId==null){
+            return ResponseResult.FAILED("请稍后重试");
+        }
+        if(isLinux){
+            param.add("mono");
+        }
         param.add(PROGRAM_PATH);
-        param.add(FileId);
+        param.add(fileId);
         param.add(cycleLengthThreshold);
         param.add(dustLengthThreshold);
 
@@ -119,11 +131,11 @@ public class FileServicesImpl extends BaseService {
     }
 
 
-    private boolean checkResult(String FileId, String cycleLengthThreshold, String dustLengthThreshold) {
+    private boolean checkParams(String fileId, String cycleLengthThreshold, String dustLengthThreshold) {
         if (cycleLengthThreshold == null) {
             return false;
         }
-        if (FileId == null) {
+        if (fileId == null) {
             return false;
         }
         if (dustLengthThreshold == null) {
@@ -156,34 +168,42 @@ public class FileServicesImpl extends BaseService {
 
     /**
      * 提交
-     * @param FileId
+     *
+     * @param fileId
      * @param cycleLengthThreshold
      * @param dustLengthThreshold
      * @param countNum
      * @param animalName
      * @return
      */
-    public ResponseResult submit(String FileId, String cycleLengthThreshold, String dustLengthThreshold, String countNum, String animalName) {
-        if (!checkResult(FileId, cycleLengthThreshold, dustLengthThreshold)) {
+    public ResponseResult submit(String fileId, String cycleLengthThreshold, String dustLengthThreshold, String countNum, String animalName) {
+        if (!checkParams(fileId, cycleLengthThreshold, dustLengthThreshold)) {
             return ResponseResult.FAILED("输入不正确");
         }
-        File file = new File(filePath + File.separator + FileId + ".sequence");
+        File file = new File(INPUT_PATH + File.separator + fileId + ".sequence");
+        if(!file.exists()||fileDao.findOneById(fileId)==null){
+            return ResponseResult.FAILED("请刷新重试");
+        }
         try {
             String fileString = readFile(file);
+            assert fileString != null;
             List<String> fileList = TextUtils.splitEnter(fileString);
             List<String> countNumList = TextUtils.splitCross(countNum);
-            int countNumAll=0;
+            int countNumAll = 0;
             for (String s : countNumList) {
-                countNumAll+=Integer.parseInt(s);
+                countNumAll += Integer.parseInt(s);
             }
-            if(fileList.size()!=countNumAll){
+            if (fileList.size() != countNumAll) {
                 return ResponseResult.FAILED();
             }
         } catch (IOException e) {
             e.printStackTrace();
             return ResponseResult.FAILED();
         }
-        NamoSunUser oneByFileId = fileDao.findOneById(FileId);
+        NamoSunUser oneByFileId = fileDao.findOneById(fileId);
+        if(oneByFileId==null){
+            return ResponseResult.FAILED("请稍后重试");
+        }
         oneByFileId.setAnimalName(animalName);
         oneByFileId.setCountNum(countNum);
         oneByFileId.setCycleLengthThreshold(cycleLengthThreshold);
@@ -200,7 +220,6 @@ public class FileServicesImpl extends BaseService {
         File[] f_Arr = file.listFiles();//获取目录的所有路径表示的文件
         if (f_Arr != null) {
             for (File f_val : f_Arr) {
-                //递归
                 if (f_val.isDirectory()) {
                     delFile(f_val);//递归调用自己
                 }
@@ -212,6 +231,7 @@ public class FileServicesImpl extends BaseService {
 
     /**
      * 删除
+     *
      * @param id
      * @return
      */
@@ -219,18 +239,26 @@ public class FileServicesImpl extends BaseService {
         if (id == null) {
             return ResponseResult.FAILED("");
         }
+        if(fileDao.findOneById(id)==null){
+            return ResponseResult.FAILED("请稍微重试");
+        }
         fileDao.deleteById(id);
-        String targetInputPath = filePath + File.separator + id + ".sequence";
+        String targetInputPath = INPUT_PATH + File.separator + id + ".sequence";
         String targetOutPath = OUT_PATH + File.separator + id;
         File inputFile = new File(targetInputPath);
         File outputFile = new File(targetOutPath);
-        delFile(inputFile);
-        delFile(outputFile);
+        try {
+            delFile(inputFile);
+            delFile(outputFile);
+        } catch (Exception ignored) {
+        }
+
         return ResponseResult.SUCCESS("删除成功");
     }
 
     /**
      * 获得结果
+     *
      * @param id
      * @return
      */
@@ -240,6 +268,9 @@ public class FileServicesImpl extends BaseService {
             if (id == null) {
                 return ResponseResult.FAILED();
             }
+        }
+        if (fileDao.findOneById(id) == null) {
+            return ResponseResult.FAILED("请刷新重试");
         }
         Result result = null;
         try {
@@ -354,6 +385,7 @@ public class FileServicesImpl extends BaseService {
 
     /**
      * 获得比较之后的图2
+     *
      * @param id
      * @param animalName
      * @return
@@ -366,8 +398,11 @@ public class FileServicesImpl extends BaseService {
                 return ResponseResult.FAILED();
             }
         }
+        //如果id已经被清空
+        if (fileDao.findOneById(id) == null) {
+            return ResponseResult.FAILED("文件不存在，请刷新重试");
+        }
         //动物token
-
         if (animalName == null) {
             String cookie = CookieUtils.getCookie(getRequest(), ConstantUtils.NAMO_SUM_ANIMAL_NAME_KEY);
             if (cookie != null) {
@@ -375,26 +410,25 @@ public class FileServicesImpl extends BaseService {
                 String cookieId = splitSpace.get(0);
                 animalName = splitSpace.get(1);
                 if (!cookieId.equals(id)) {
-                    return ResponseResult.FAILED();
+                    return ResponseResult.FAILED("请刷新重试");
                 }
             } else {
-                return ResponseResult.FAILED();
+                return ResponseResult.FAILED("请刷新重试");
             }
         }
         //如果传入3个动物
         List<String> splitAnimalList = TextUtils.splitCross(animalName);
-        if(splitAnimalList.size()!=2){
-            return ResponseResult.FAILED("失败");
+        if (splitAnimalList.size() != 2) {
+            return ResponseResult.FAILED("错误，请刷新重试");
         }
 
         String targetOutPath = OUT_PATH + File.separator + id + File.separator + animalName + ".txt";
-        String firstOutPath=OUT_PATH + File.separator + id + File.separator + splitAnimalList.get(0) + ".txt";
-        String secondOutPath=OUT_PATH + File.separator + id + File.separator + splitAnimalList.get(1) + ".txt";
+        String firstOutPath = OUT_PATH + File.separator + id + File.separator + splitAnimalList.get(0) + ".txt";
+        String secondOutPath = OUT_PATH + File.separator + id + File.separator + splitAnimalList.get(1) + ".txt";
         File file = new File(targetOutPath);
         //如果存在就取出来
         if (file.exists()) {
             try {
-
                 String fileList = readFile(file);
                 assert fileList != null;
                 List<String> splitSpace = TextUtils.splitSpace(fileList);
@@ -404,6 +438,7 @@ public class FileServicesImpl extends BaseService {
                     graph.add(splitCross);
                 }
                 CookieUtils.setUpCookie(getResponse(), ConstantUtils.NAMO_SUM_ANIMAL_NAME_KEY, id + ":" + animalName);
+                //读取序列
                 File fileFirst = new File(firstOutPath);
                 File fileSecond = new File(secondOutPath);
                 String fileFirstList = readFile(fileFirst);
@@ -412,9 +447,10 @@ public class FileServicesImpl extends BaseService {
                 List<String> splitFirstList = TextUtils.splitCross(fileFirstList);
                 assert fileSecondList != null;
                 List<String> splitSecondList = TextUtils.splitCross(fileSecondList);
-                return ResponseResult.SUCCESS().setData(new DetailResult(simpleGraph(graph),splitFirstList,splitSecondList));
+                return ResponseResult.SUCCESS().setData(new DetailResult(simpleGraph(graph), splitFirstList, splitSecondList));
             } catch (IOException e) {
                 e.printStackTrace();
+                return ResponseResult.FAILED("错误，请刷新重试");
             }
         }
         //不存在就创建
@@ -480,17 +516,14 @@ public class FileServicesImpl extends BaseService {
         }
 
 
-
         FileWriter writer;
         FileWriter writer1;
         FileWriter writer2;
         try {
             writer = new FileWriter(targetOutPath);
             writer.write(writeToFile.toString());
-
             writer1 = new FileWriter(firstOutPath);
             writer1.write(markListToString(markLineDataFirst));
-
             writer2 = new FileWriter(secondOutPath);
             writer2.write(markListToString(markLineDataSecond));
             writer.flush();
@@ -504,16 +537,16 @@ public class FileServicesImpl extends BaseService {
         }
 
         CookieUtils.setUpCookie(getResponse(), ConstantUtils.NAMO_SUM_ANIMAL_NAME_KEY, id + ":" + animalName);
-        return ResponseResult.SUCCESS().setData(new DetailResult(simpleGraph(graph),markLineDataFirst,markLineDataSecond));
+        return ResponseResult.SUCCESS().setData(new DetailResult(simpleGraph(graph), markLineDataFirst, markLineDataSecond));
     }
 
     private List<List<String>> simpleGraph(List<List<String>> graph) {
-        List<List<String>> result=  new ArrayList<>();
-        if(graph.size()<2000){
-            return  graph;
+        List<List<String>> result = new ArrayList<>();
+        if (graph.size() < 2000) {
+            return graph;
         }
-        int step=graph.size()/2000;
-        for (int i = 0; i < graph.size(); i+=step) {
+        int step = graph.size() / 2000;
+        for (int i = 0; i < graph.size(); i += step) {
             result.add(graph.get(i));
         }
         return result;
@@ -522,8 +555,8 @@ public class FileServicesImpl extends BaseService {
     private String markListToString(List<String> markLineData) {
         StringBuilder writeToFile = new StringBuilder();
         for (int i = 0; i < markLineData.size(); i++) {
-             writeToFile.append(markLineData.get(i));
-            if(i<markLineData.size()-1) writeToFile.append("-");
+            writeToFile.append(markLineData.get(i));
+            if (i < markLineData.size() - 1) writeToFile.append("-");
         }
         return writeToFile.toString();
     }
@@ -546,7 +579,7 @@ public class FileServicesImpl extends BaseService {
         List<String> result = new ArrayList<>();
         int index = animalNameByDaoSplit.indexOf(splitCross.get(num));
         if (index == -1) return null;
-        int nowCount=0;
+        int nowCount = 0;
         for (int i = Integer.parseInt(countNum.get(index)); i < Integer.parseInt(countNum.get(index + 1)); i++) {
             for (int j = 0; j < blocks.get(i).size(); j++) {
                 List<String> syntenyElement = synteny.get(Math.abs(Integer.parseInt(blocks.get(i).get(j))));
@@ -557,10 +590,22 @@ public class FileServicesImpl extends BaseService {
                         result.add(syntenyElement.get(k));
                     }
                 }
-                nowCount+=syntenyElement.size();
+                nowCount += syntenyElement.size();
             }
             markLineData.add(String.valueOf(nowCount));
         }
         return result;
+    }
+
+    public ResponseResult deleteAll() {
+        List<NamoSunUser> allList = fileDao.findAll();
+        allList.forEach((list) -> {
+            delete(list.getId());
+        });
+        String targetOutPath = OUT_PATH;
+        String targetInputPath = INPUT_PATH;
+        delFile(new File(targetOutPath));
+        delFile(new File(targetInputPath));
+        return ResponseResult.SUCCESS();
     }
 }

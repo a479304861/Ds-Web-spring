@@ -74,4 +74,9 @@ public class FileController {
         return fileService.download(id, fileName);
     }
 
+    @DeleteMapping("/deleteAll")
+    public ResponseResult deleteAll() {
+        return fileService.deleteAll();
+    }
+
 }

@@ -23,6 +23,6 @@ spring:
     password: qqwwee123
 
 Namosun.graduate.file.save-path: E:\学习资料\IjDemo\graduate_project\file
-Namosun.graduate.file.max-size: 52428800
 Namosun.graduate.program-path:  G:\桌面\毕设\textDemo\drimm\bin\Release\netcoreapp2.1\win-x64\drimm.exe
 Namosun.graduate.out-path: G:\桌面\毕设\output
+Namosun.graduate.isLinux: true
