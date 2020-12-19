@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 
 import java.util.*;
@@ -44,6 +45,8 @@ public class FileServicesImpl extends BaseService {
 
     @Autowired
     private NamosunUserDao fileDao;
+    //简化点的个数
+    private static final int pointNum = 1000;
 
     /**
      * 上传
@@ -54,6 +57,14 @@ public class FileServicesImpl extends BaseService {
     public ResponseResult upload(MultipartFile file) {
         if (file == null) {
             return ResponseResult.FAILED("上传失败，上传数据为空");
+        }
+        System.out.println(file.getContentType());
+        String cookie = CookieUtils.getCookie(getRequest(), ConstantUtils.NAMO_SUM_KEY);
+        if (cookie == null) {
+            return ResponseResult.FAILED("没有登入错误");
+        }
+        if (TextUtils.isEmpty(file.getName())) {
+            return ResponseResult.FAILED("文件名为空错误");
         }
         String fileId = idWorker.nextId() + "";
         try {
@@ -71,13 +82,7 @@ public class FileServicesImpl extends BaseService {
         } catch (Exception e) {
             return ResponseResult.FAILED("系统异常，上传失败");
         }
-        String cookie = CookieUtils.getCookie(getRequest(), ConstantUtils.NAMO_SUM_KEY);
-        if (cookie == null) {
-            return ResponseResult.FAILED("错误");
-        }
-        if (TextUtils.isEmpty(file.getName())) {
-            return ResponseResult.FAILED("错误");
-        }
+
         NamoSunUser namoSunFile = new NamoSunUser();
         namoSunFile.setId(fileId);
         namoSunFile.setComplete("0");
@@ -131,22 +136,20 @@ public class FileServicesImpl extends BaseService {
         fileDao.save(oneByFileId);
 
 
-        //TODO：储存分开的文件
+        //储存分开的文件
         try {
             //读取block
             String blockString = readFile(new File(OUT_PATH + File.separator + fileId + File.separator + "blocks.txt"));
             String modifiedString = readFile(new File(OUT_PATH + File.separator + fileId + File.separator + "modifiedSequence.txt"));
             List<String> countNumSplitCross = TextUtils.splitCross(countNum);
             List<String> animalNameSplitCross = TextUtils.splitCross(animalName);
+            //写入
             writeToFileByAnimal(blockString, fileId, countNumSplitCross, animalNameSplitCross, "block");
             writeToFileByAnimal(modifiedString, fileId, countNumSplitCross, animalNameSplitCross, "modifiedSequence");
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-        //读取modifyList
-
-        //写入各个动物的读取modifyList
         return ResponseResult.SUCCESS();
     }
 
@@ -170,12 +173,12 @@ public class FileServicesImpl extends BaseService {
             StringBuilder stringBuilder = new StringBuilder();
             for (String list : ListByAnimal.get(i)) {
                 stringBuilder.append(list);
-                if (ListByAnimal.get(i).indexOf(list)!=ListByAnimal.get(i).size()-1){
+                if (ListByAnimal.get(i).indexOf(list) != ListByAnimal.get(i).size() - 1) {
                     stringBuilder.append("\r\n");
                 }
             }
             try {
-                stringWriteToFile(OUT_PATH + File.separator + fileId + File.separator + last+"_"+ animalNameSplitCross.get(i)+".txt" ,
+                stringWriteToFile(OUT_PATH + File.separator + fileId + File.separator + last + "_" + animalNameSplitCross.get(i) + ".txt",
                         stringBuilder.toString());
             } catch (IOException e) {
                 e.printStackTrace();
@@ -408,43 +411,75 @@ public class FileServicesImpl extends BaseService {
     /**
      * 下载文件
      *
-     * @param id       文件id
-     * @param fileName 是哪个文件
+     * @param fileId 文件id
      * @return
      */
-    public ResponseEntity<byte[]> download(String id, String fileName) {
-        if (id == null) {
-            id = CookieUtils.getCookie(getRequest(), ConstantUtils.NAMO_SUM_RESULT_KEY);
-            if (id == null) {
-                return null;
+    public void download(String fileId) {
+        if (fileId == null) {
+            fileId = CookieUtils.getCookie(getRequest(), ConstantUtils.NAMO_SUM_RESULT_KEY);
+            if (fileId == null) {
+                return;
             }
         }
-        if(fileDao.findOneById(id)==null){
-            return null;
+        if (fileDao.findOneById(fileId) == null) {
+            return;
         }
-        String targetOutPath = OUT_PATH + File.separator + id + File.separator + fileName + ".txt";
-        File file = new File(targetOutPath);
-        if(!file.exists()){
-            return null;
-        }
-        byte[] body = null;
-        InputStream is = null;
+
+        //压缩文件
+        File zipTarget = new File(OUT_PATH + File.separator + fileId + ".zip");
+        FileOutputStream fos1 = null;
         try {
-            is = new FileInputStream(file);
-            body = new byte[is.available()];
-            is.read(body);
-        } catch (Exception e) {
+            fos1 = new FileOutputStream(zipTarget);
+        } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
-        HttpHeaders headers = new HttpHeaders();
-        headers.add("Content-Disposition", "attchement;filename=" + file.getName());
-        HttpStatus statusCode = HttpStatus.OK;
-        ResponseEntity<byte[]> entity = new ResponseEntity<byte[]>(body, headers, statusCode);
-        return entity;
+        String targetOutPath = OUT_PATH + File.separator + fileId;
+        ZipUtils.toZip(targetOutPath, fos1, true);
+
+
+//
+//        byte[] body = null;
+//        InputStream is = null;
+//        try {
+//            is = new FileInputStream(zipTarget);
+//            body = new byte[is.available()];
+//            is.read(body);
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+//        HttpHeaders headers = new HttpHeaders();
+//        headers.add("Content-Disposition", "attchement;filename=" + zipTarget.getName());
+//        HttpStatus statusCode = HttpStatus.OK;
+//        HttpServletResponse response = getResponse();
+//        response.setContentType("application/zip");
+//        response.setCharacterEncoding("utf-8");
+//        ResponseEntity<byte[]> entity = new ResponseEntity<byte[]>(body, headers, statusCode);
+//        return entity;
+
+
+        try {
+            HttpServletResponse response = getResponse();
+            response.setCharacterEncoding("UTF-8");
+            BufferedInputStream fis = new BufferedInputStream(new FileInputStream(zipTarget.getPath()));
+            byte[] buffer = new byte[fis.available()];
+            fis.read(buffer);
+            fis.close();
+            response.reset();
+            OutputStream outStream = null;
+            outStream = new BufferedOutputStream(response.getOutputStream());
+            response.setContentType("application/zip");
+            response.setHeader("Content-Disposition", "attachment;filename=" + new String(fileId.getBytes("UTF-8"), "ISO-8859-1"));
+            outStream.write(buffer);
+            outStream.flush();
+            outStream.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
     }
 
     /**
-     * 获得比较之后的图2
+     * 获得比较之后的图
      *
      * @param id
      * @param animalName
@@ -596,10 +631,10 @@ public class FileServicesImpl extends BaseService {
 
     private List<List<String>> simpleGraph(List<List<String>> graph) {
         List<List<String>> result = new ArrayList<>();
-        if (graph.size() < 2000) {
+        if (graph.size() < pointNum) {
             return graph;
         }
-        int step = graph.size() / 2000;
+        int step = graph.size() / pointNum;
         for (int i = 0; i < graph.size(); i += step) {
             result.add(graph.get(i));
         }

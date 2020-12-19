@@ -1,5 +1,11 @@
 server:
   port: 8080
+  tomcat:
+    connection-timeout: 180000
+  netty:
+    connection-timeout: 180000
+  jetty:
+    connection-idle-timeout: 180000
 spring:
   servlet:
     multipart:
@@ -15,12 +21,12 @@ spring:
     port: 6379
     host: 127.0.0.1
   datasource:
-      druid:
-        initial-size: 1
-      url: jdbc:mysql://localhost:3306/namosun_graduate_project?characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai
-      driver-class-name: com.mysql.cj.jdbc.Driver
-      username: root
-      password: qqwwee123
+    druid:
+      initial-size: 1
+    url: jdbc:mysql://localhost:3306/namosun_graduate_project?characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: qqwwee123
   main:
     allow-bean-definition-overriding: true
 

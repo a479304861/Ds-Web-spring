@@ -27,6 +27,7 @@ public class UserServiceImpl extends BaseService {
 
     /**
      * 验证用户cookie看是否登入过，如果没有，生成一个id给用户
+     *
      * @return
      */
     public ResponseResult checkUser() {
@@ -34,8 +35,8 @@ public class UserServiceImpl extends BaseService {
         HttpServletResponse response = getResponse();
         String cookie = CookieUtils.getCookie(request, ConstantUtils.NAMO_SUM_KEY);
         List<NamoSunUser> allById = null;
+        //没有cookie
         if (cookie == null) {
-            //没有cookie
             cookie = idWorker.nextId() + "";
             CookieUtils.setUpCookie(response, ConstantUtils.NAMO_SUM_KEY, cookie);
         } else {
