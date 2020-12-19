@@ -23,7 +23,26 @@ public class NamoSunUser {
 	private String countNum;
   	@Column(name = "animal_name" )
 	private String animalName;
+  	@Column(name = "cycle_length_threshold" )
+	private String cycleLengthThreshold;
+  	@Column(name = "dust_length_threshold" )
+	private String dustLengthThreshold;
 
+	public String getCycleLengthThreshold() {
+		return cycleLengthThreshold;
+	}
+
+	public void setCycleLengthThreshold(String cycleLengthThreshold) {
+		this.cycleLengthThreshold = cycleLengthThreshold;
+	}
+
+	public String getDustLengthThreshold() {
+		return dustLengthThreshold;
+	}
+
+	public void setDustLengthThreshold(String dustLengthThreshold) {
+		this.dustLengthThreshold = dustLengthThreshold;
+	}
 
 	public String getId() {
 		return id;

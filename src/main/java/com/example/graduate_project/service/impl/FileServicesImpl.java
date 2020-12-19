@@ -1,6 +1,7 @@
 package com.example.graduate_project.service.impl;
 
 import com.example.graduate_project.dao.NamosunUserDao;
+import com.example.graduate_project.dao.enity.DetailResult;
 import com.example.graduate_project.dao.enity.NamoSunUser;
 import com.example.graduate_project.dao.enity.ResponseResult;
 import com.example.graduate_project.dao.enity.Result;
@@ -46,7 +47,6 @@ public class FileServicesImpl extends BaseService {
      * @return
      */
     public ResponseResult upload(MultipartFile file) {
-
         if (file == null) {
             return ResponseResult.FAILED("上传失败，上传数据为空");
         }
@@ -106,17 +106,17 @@ public class FileServicesImpl extends BaseService {
 
         try {
             RunExeUtils.openRun(param);
-
-            oneByFileId.setCountNum(countNum);
-            oneByFileId.setAnimalName(animalName);
             oneByFileId.setComplete("2");
+            oneByFileId.setAnimalName(animalName);
+            oneByFileId.setCountNum(countNum);
+            oneByFileId.setCycleLengthThreshold(cycleLengthThreshold);
+            oneByFileId.setDustLengthThreshold(dustLengthThreshold);
             fileDao.save(oneByFileId);
         } catch (Exception e) {
             return ResponseResult.FAILED("失败");
         }
         return ResponseResult.SUCCESS();
     }
-
 
 
     private boolean checkResult(String FileId, String cycleLengthThreshold, String dustLengthThreshold) {
@@ -167,9 +167,27 @@ public class FileServicesImpl extends BaseService {
         if (!checkResult(FileId, cycleLengthThreshold, dustLengthThreshold)) {
             return ResponseResult.FAILED("输入不正确");
         }
+        File file = new File(filePath + File.separator + FileId + ".sequence");
+        try {
+            String fileString = readFile(file);
+            List<String> fileList = TextUtils.splitEnter(fileString);
+            List<String> countNumList = TextUtils.splitCross(countNum);
+            int countNumAll=0;
+            for (String s : countNumList) {
+                countNumAll+=Integer.parseInt(s);
+            }
+            if(fileList.size()!=countNumAll){
+                return ResponseResult.FAILED();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            return ResponseResult.FAILED();
+        }
         NamoSunUser oneByFileId = fileDao.findOneById(FileId);
         oneByFileId.setAnimalName(animalName);
         oneByFileId.setCountNum(countNum);
+        oneByFileId.setCycleLengthThreshold(cycleLengthThreshold);
+        oneByFileId.setDustLengthThreshold(dustLengthThreshold);
         oneByFileId.setComplete("1");
         fileDao.save(oneByFileId);
         return ResponseResult.SUCCESS("提交成功");
@@ -341,12 +359,15 @@ public class FileServicesImpl extends BaseService {
      * @return
      */
     public ResponseResult getComp(String id, String animalName) {
+        //结果token
         if (id == null) {
             id = CookieUtils.getCookie(getRequest(), ConstantUtils.NAMO_SUM_RESULT_KEY);
             if (id == null) {
                 return ResponseResult.FAILED();
             }
         }
+        //动物token
+
         if (animalName == null) {
             String cookie = CookieUtils.getCookie(getRequest(), ConstantUtils.NAMO_SUM_ANIMAL_NAME_KEY);
             if (cookie != null) {
@@ -360,22 +381,39 @@ public class FileServicesImpl extends BaseService {
                 return ResponseResult.FAILED();
             }
         }
+        //如果传入3个动物
+        List<String> splitAnimalList = TextUtils.splitCross(animalName);
+        if(splitAnimalList.size()!=2){
+            return ResponseResult.FAILED("失败");
+        }
+
         String targetOutPath = OUT_PATH + File.separator + id + File.separator + animalName + ".txt";
-        System.out.println(targetOutPath);
+        String firstOutPath=OUT_PATH + File.separator + id + File.separator + splitAnimalList.get(0) + ".txt";
+        String secondOutPath=OUT_PATH + File.separator + id + File.separator + splitAnimalList.get(1) + ".txt";
         File file = new File(targetOutPath);
         //如果存在就取出来
         if (file.exists()) {
             try {
+
                 String fileList = readFile(file);
                 assert fileList != null;
                 List<String> splitSpace = TextUtils.splitSpace(fileList);
-                List<List<String>> result = new ArrayList<>();
+                List<List<String>> graph = new ArrayList<>();
                 for (String item : splitSpace) {
                     List<String> splitCross = TextUtils.splitCross(item);
-                    result.add(splitCross);
+                    graph.add(splitCross);
                 }
                 CookieUtils.setUpCookie(getResponse(), ConstantUtils.NAMO_SUM_ANIMAL_NAME_KEY, id + ":" + animalName);
-                return ResponseResult.SUCCESS().setData(result);
+                //TODO:获得list
+                File fileFirst = new File(firstOutPath);
+                File fileSecond = new File(secondOutPath);
+                String fileFirstList = readFile(fileFirst);
+                String fileSecondList = readFile(fileSecond);
+                assert fileFirstList != null;
+                List<String> splitFirstList = TextUtils.splitCross(fileFirstList);
+                assert fileSecondList != null;
+                List<String> splitSecondList = TextUtils.splitCross(fileSecondList);
+                return ResponseResult.SUCCESS().setData(new DetailResult(graph,splitFirstList,splitSecondList));
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -387,19 +425,36 @@ public class FileServicesImpl extends BaseService {
         List<String> animalNameByDaoSplit = TextUtils.splitCross(animalNameByDao);
         List<String> firstList;
         List<String> secondList;
+        List<String> markLineDataFirst;
+        List<String> markLineDataSecond;
+        //获取syn长序列
         try {
-            firstList = getList(0, splitCross, animalNameByDaoSplit, getCountNumList(oneById.getCountNum()), getBlockList(id), getSynList(id, new ArrayList<>()));
+            markLineDataFirst = new ArrayList<>();
+            firstList = getSynLongList(0,
+                    splitCross,
+                    animalNameByDaoSplit,
+                    getCountNumList(oneById.getCountNum()),
+                    getBlockList(id),
+                    getSynList(id, new ArrayList<>()),
+                    markLineDataFirst);
             if (firstList == null) {
                 return ResponseResult.FAILED("输入不正确");
             }
-            secondList = getList(1, splitCross, animalNameByDaoSplit, getCountNumList(oneById.getCountNum()), getBlockList(id), getSynList(id, new ArrayList<>()));
+            markLineDataSecond = new ArrayList<>();
+            secondList = getSynLongList(1,
+                    splitCross,
+                    animalNameByDaoSplit,
+                    getCountNumList(oneById.getCountNum()),
+                    getBlockList(id),
+                    getSynList(id, new ArrayList<>()),
+                    markLineDataSecond);
             if (secondList == null) {
                 return ResponseResult.FAILED("输入不正确");
             }
         } catch (Exception e) {
             return ResponseResult.FAILED("打开文件失败");
         }
-        //获得相等的节点
+        //根据长序列获得相等的节点
         List<List<String>> graph = new ArrayList<>();
         for (int i = 0; i < firstList.size(); i++) {
             for (int j = 0; j < secondList.size(); j++) {
@@ -412,7 +467,7 @@ public class FileServicesImpl extends BaseService {
                 }
             }
         }
-
+        //写入文件
         StringBuilder writeToFile = new StringBuilder();
         for (List<String> strings : graph) {
             for (int j = 0; j < strings.size(); j++) {
@@ -424,17 +479,41 @@ public class FileServicesImpl extends BaseService {
             }
             writeToFile.append(" ");
         }
+
+
+
         FileWriter writer;
+        FileWriter writer1;
+        FileWriter writer2;
         try {
             writer = new FileWriter(targetOutPath);
             writer.write(writeToFile.toString());
+
+            writer1 = new FileWriter(firstOutPath);
+            writer1.write(markListToString(markLineDataFirst));
+
+            writer2 = new FileWriter(secondOutPath);
+            writer2.write(markListToString(markLineDataSecond));
             writer.flush();
             writer.close();
+            writer1.flush();
+            writer1.close();
+            writer2.flush();
+            writer2.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
         CookieUtils.setUpCookie(getResponse(), ConstantUtils.NAMO_SUM_ANIMAL_NAME_KEY, id + ":" + animalName);
-        return ResponseResult.SUCCESS().setData(graph);
+        return ResponseResult.SUCCESS().setData(new DetailResult(graph,markLineDataFirst,markLineDataSecond));
+    }
+
+    private String markListToString(List<String> markLineData) {
+        StringBuilder writeToFile = new StringBuilder();
+        for (int i = 0; i < markLineData.size(); i++) {
+             writeToFile.append(markLineData.get(i));
+            if(i<markLineData.size()-1) writeToFile.append("-");
+        }
+        return writeToFile.toString();
     }
 
     /**
@@ -443,17 +522,19 @@ public class FileServicesImpl extends BaseService {
      * @param countNum
      * @param blocks
      * @param synteny
+     * @param
      * @return
      */
-    private List<String> getList(int num,
-                                 List<String> splitCross,
-                                 List<String> animalNameByDaoSplit,
-                                 List<String> countNum,
-                                 List<List<String>> blocks,
-                                 List<List<String>> synteny) {
+    private List<String> getSynLongList(int num,
+                                        List<String> splitCross,
+                                        List<String> animalNameByDaoSplit,
+                                        List<String> countNum,
+                                        List<List<String>> blocks,
+                                        List<List<String>> synteny, List<String> markLineData) {
         List<String> result = new ArrayList<>();
         int index = animalNameByDaoSplit.indexOf(splitCross.get(num));
         if (index == -1) return null;
+        int nowCount=0;
         for (int i = Integer.parseInt(countNum.get(index)); i < Integer.parseInt(countNum.get(index + 1)); i++) {
             for (int j = 0; j < blocks.get(i).size(); j++) {
                 List<String> syntenyElement = synteny.get(Math.abs(Integer.parseInt(blocks.get(i).get(j))));
@@ -464,7 +545,9 @@ public class FileServicesImpl extends BaseService {
                         result.add(syntenyElement.get(k));
                     }
                 }
+                nowCount+=syntenyElement.size();
             }
+            markLineData.add(String.valueOf(nowCount));
         }
         return result;
     }

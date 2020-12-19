@@ -2,6 +2,8 @@ package com.example.graduate_project.controller;
 
 
 
+import com.example.graduate_project.dao.enity.ResponseResult;
+import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,12 +21,9 @@ public class HelloController {
 
 
     @RequestMapping(value = "/hello", method = RequestMethod.GET)
-    public ResponseEntity<Map<String,Object>> get(){
-        Map<String,Object> map1 = new HashMap<String,Object>();
-        System.out.println("/hello");
-        map1.put("data",30001);
-        map1.put("username","123");
-        return new ResponseEntity<Map<String,Object>>(map1,HttpStatus.OK);
+    public ResponseResult get(){
+        return ResponseResult.SUCCESS();
+
     }
 
 
