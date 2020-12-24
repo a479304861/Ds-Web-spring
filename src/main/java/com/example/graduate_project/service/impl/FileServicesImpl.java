@@ -15,10 +15,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import org.w3c.dom.Text;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 
+import java.lang.reflect.Array;
 import java.util.*;
 
 
@@ -337,14 +339,18 @@ public class FileServicesImpl extends BaseService {
             NamoSunUser oneById = fileDao.findOneById(id);
             String animalName = oneById.getAnimalName();
             String countNum = oneById.getCountNum();
+            List<String> splitAnimalByDao = TextUtils.splitCross(animalName);
+
             String cookieChoseAnimalName = CookieUtils.getCookie(getRequest(), ConstantUtils.NAMO_SUM_ANIMAL_NAME_KEY);
-            List<String> splitChoseAnimalName = null;
+            List<String> splitChoseAnimalName = new ArrayList<>();
             if (cookieChoseAnimalName != null) {
                 List<String> splitSpace = TextUtils.splitColon(cookieChoseAnimalName);
-                String choseAnimalName = splitSpace.get(1);
+                String choseAnimalNameIndex = splitSpace.get(1);
                 String cookieId = splitSpace.get(0);
                 if (cookieId.equals(id)) {
-                    splitChoseAnimalName = TextUtils.splitCross(choseAnimalName);
+                    List<String> splitCross = TextUtils.splitCross(choseAnimalNameIndex);
+                    splitChoseAnimalName.add(splitAnimalByDao.get(Integer.parseInt(splitCross.get(0))));
+                    splitChoseAnimalName.add(splitAnimalByDao.get(Integer.parseInt(splitCross.get(1))));
                 }
             }
             List<String> countNumList = getCountNumList(countNum);
@@ -494,16 +500,21 @@ public class FileServicesImpl extends BaseService {
             }
         }
         //如果id已经被清空
-        if (fileDao.findOneById(id) == null) {
+        NamoSunUser oneById = fileDao.findOneById(id);
+        if (oneById == null) {
             return ResponseResult.FAILED("文件不存在，请刷新重试");
         }
+        List<String> splitAnimalByDao = TextUtils.splitCross(oneById.getAnimalName());
+
         //动物token
         if (animalName == null) {
             String cookie = CookieUtils.getCookie(getRequest(), ConstantUtils.NAMO_SUM_ANIMAL_NAME_KEY);
             if (cookie != null) {
                 List<String> splitSpace = TextUtils.splitColon(cookie);
                 String cookieId = splitSpace.get(0);
-                animalName = splitSpace.get(1);
+                List<String> animalIndex = TextUtils.splitCross(splitSpace.get(1));
+                animalName = splitAnimalByDao.get(Integer.parseInt(animalIndex.get(0))) +
+                        '-' + splitAnimalByDao.get(Integer.parseInt(animalIndex.get(1)));
                 if (!cookieId.equals(id)) {
                     return ResponseResult.FAILED("请刷新重试");
                 }
@@ -522,6 +533,7 @@ public class FileServicesImpl extends BaseService {
         String secondOutPath = OUT_PATH + File.separator + id + File.separator + splitAnimalList.get(1) + ".txt";
         File file = new File(targetOutPath);
         //如果存在就取出来
+
         if (file.exists()) {
             try {
                 String fileList = readFile(file);
@@ -532,7 +544,11 @@ public class FileServicesImpl extends BaseService {
                     List<String> splitCross = TextUtils.splitCross(item);
                     graph.add(splitCross);
                 }
-                CookieUtils.setUpCookie(getResponse(), ConstantUtils.NAMO_SUM_ANIMAL_NAME_KEY, id + ":" + animalName);
+
+                List<String> splitCross = TextUtils.splitCross(animalName);
+                CookieUtils.setUpCookie(getResponse(), ConstantUtils.NAMO_SUM_ANIMAL_NAME_KEY, id +
+                        ":" + splitAnimalByDao.indexOf(splitCross.get(0)) +
+                        "-" + splitAnimalByDao.indexOf(splitCross.get(1)));
                 //读取序列
                 File fileFirst = new File(firstOutPath);
                 File fileSecond = new File(secondOutPath);
@@ -549,7 +565,6 @@ public class FileServicesImpl extends BaseService {
             }
         }
         //不存在就创建
-        NamoSunUser oneById = fileDao.findOneById(id);
         List<String> splitCross = TextUtils.splitCross(animalName);
         String animalNameByDao = oneById.getAnimalName();
         List<String> animalNameByDaoSplit = TextUtils.splitCross(animalNameByDao);
@@ -617,8 +632,9 @@ public class FileServicesImpl extends BaseService {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-        CookieUtils.setUpCookie(getResponse(), ConstantUtils.NAMO_SUM_ANIMAL_NAME_KEY, id + ":" + animalName);
+        CookieUtils.setUpCookie(getResponse(), ConstantUtils.NAMO_SUM_ANIMAL_NAME_KEY, id +
+                ":" + splitAnimalByDao.indexOf(splitCross.get(0)) +
+                "-" + splitAnimalByDao.indexOf(splitCross.get(1)));
         return ResponseResult.SUCCESS().setData(new DetailResult(simpleGraph(graph), markLineDataFirst, markLineDataSecond));
     }
 
