@@ -150,14 +150,19 @@ public class FileServicesImpl extends BaseService {
             writeToFileByAnimal(modifiedString, fileId, countNumSplitCross, animalNameSplitCross, "modifiedSequence");
         } catch (IOException e) {
             e.printStackTrace();
+            return ResponseResult.FAILED("失败");
         }
 
         return ResponseResult.SUCCESS();
     }
 
-    public void writeToFileByAnimal(String writeString, String fileId, List<String> countNumSplitCross, List<String> animalNameSplitCross, String last) {
+    public void writeToFileByAnimal(String writeString,
+                                    String fileId,
+                                    List<String> countNumSplitCross,
+                                    List<String> animalNameSplitCross,
+                                    String last) {
         assert writeString != null;
-        List<String> blockList = TextUtils.splitEnter(writeString);
+        List<String> blockList = TextUtils.splitEnter(writeString,isLinux);
 
         int nowIndex = 0;
         //获得listByAnimal
@@ -246,7 +251,7 @@ public class FileServicesImpl extends BaseService {
         try {
             String fileString = readFile(file);
             assert fileString != null;
-            List<String> fileList = TextUtils.splitEnter(fileString);
+            List<String> fileList = TextUtils.splitEnter(fileString,isLinux);
             List<String> countNumList = TextUtils.splitCross(countNum);
             int countNumAll = 0;
             for (String s : countNumList) {
@@ -371,7 +376,7 @@ public class FileServicesImpl extends BaseService {
         if (syntenyLists == null) {
             return null;
         }
-        syntenyList = TextUtils.splitEnter(syntenyLists);
+        syntenyList = TextUtils.splitEnter(syntenyLists,isLinux);
 
         List<List<String>> syntenyListsList = new ArrayList<>();
         for (String s : syntenyList) {
@@ -393,7 +398,7 @@ public class FileServicesImpl extends BaseService {
         if (blocksList == null) {
             return null;
         }
-        List<String> blocksLists = TextUtils.splitEnter(blocksList);
+        List<String> blocksLists = TextUtils.splitEnter(blocksList,isLinux);
         List<List<String>> blocksListList = new ArrayList<>();
         for (String s : blocksLists) {
             List<String> strings = new ArrayList<>(Arrays.asList(s.split(" ")));
