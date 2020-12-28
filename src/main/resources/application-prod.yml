@@ -31,6 +31,16 @@ spring:
   main:
     allow-bean-definition-overriding: true
 
+  freemarker:
+    charset: UTF-8
+    expose-session-attributes: true
+    content-type: text/html;charset=UTF-8
+    suffix: .html
+    cache: false
+  resources:
+    static-locations: classpath:/META-INF/resources/,classpath:/resources/static/,classpath:/static/,classpath:/public
+
+
 Namosun.graduate.file.save-path: /namosun
 Namosun.graduate.program-path: /namosun/Program.exe
 Namosun.graduate.out-path: /namosun/output
