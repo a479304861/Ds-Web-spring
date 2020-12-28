@@ -688,7 +688,7 @@ public class FileServicesImpl extends BaseService {
         for (int i = Integer.parseInt(countNum.get(index)); i < Integer.parseInt(countNum.get(index + 1)); i++) {
             for (int j = 0; j < blocks.get(i).size(); j++) {
                 List<String> syntenyElement = synteny.get(Math.abs(Integer.parseInt(blocks.get(i).get(j))));
-                if (Integer.parseInt(blocks.get(i).get(j)) > 0) {
+                if (Integer.parseInt(blocks.get(i).get(j)) < 0) {
                     result.addAll(syntenyElement);
                 } else {
                     for (int k = syntenyElement.size() - 1; k >= 0; k--) {

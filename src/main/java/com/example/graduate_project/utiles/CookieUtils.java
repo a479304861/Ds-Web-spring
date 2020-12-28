@@ -10,7 +10,9 @@ public class CookieUtils {
 
     public static final int DEFAULT_AGE = 60 * 60 * 24 * 365;
 
-    public final static String domain = "10.170.85.188";
+//    public final static String domain = "10.170.85.188";
+//    public final static String domain = "localhost";
+    public final static String domain = "47.111.13.56";
 
 
     public static void setUpCookie(HttpServletResponse response, String key, String value) {

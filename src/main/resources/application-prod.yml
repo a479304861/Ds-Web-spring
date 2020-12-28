@@ -1,5 +1,11 @@
 server:
-  port: 8080
+  port: 8100
+  tomcat:
+    connection-timeout: 180000
+  netty:
+    connection-timeout: 180000
+  jetty:
+    connection-idle-timeout: 180000
 spring:
   servlet:
     multipart:
@@ -12,19 +18,20 @@ spring:
   application:
     name: Namosun_graduate_project
   redis:
-    port: 6379
-    host: 127.0.0.1
+    port: 6380
+    password: "@java2springboot"
+    host: 47.111.13.56
   datasource:
     druid:
       initial-size: 1
-    url: jdbc:mysql://localhost:3306/namosun_graduate_project?characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai
+    url: jdbc:mysql://47.111.13.56:3307/namosun_graduate_project?characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: root
-    password: qqwwee123
+    password: "@java2springboot"
   main:
     allow-bean-definition-overriding: true
 
-Namosun.graduate.file.save-path: E:\学习资料\IjDemo\graduate_project\file
-Namosun.graduate.program-path:  G:\桌面\毕设\textDemo\drimm\bin\Release\netcoreapp2.1\win-x64\drimm.exe
-Namosun.graduate.out-path: G:\桌面\毕设\output
+Namosun.graduate.file.save-path: /namosun
+Namosun.graduate.program-path: /namosun/Program.exe
+Namosun.graduate.out-path: /namosun/output
 Namosun.graduate.isLinux: true
