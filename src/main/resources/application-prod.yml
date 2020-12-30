@@ -45,3 +45,4 @@ Namosun.graduate.file.save-path: /namosun
 Namosun.graduate.program-path: /namosun/Program.exe
 Namosun.graduate.out-path: /namosun/output
 Namosun.graduate.isLinux: true
+Namosun.graduate.domain: 47.111.13.56
