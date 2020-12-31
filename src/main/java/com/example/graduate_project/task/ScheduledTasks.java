@@ -12,9 +12,9 @@ public class ScheduledTasks {
     @Autowired
     private FileServicesImpl fileServices;
 
-    @Scheduled(fixedRate = ConstantUtils.DELETE_TIME)
-    public void task() {
-        System.out.println("deleteAll");
-        fileServices.deleteAll();
-    }
+//    @Scheduled(fixedRate = ConstantUtils.DELETE_TIME)
+//    public void task() {
+//        System.out.println("deleteAll");
+//        fileServices.deleteAll();
+//    }
 }

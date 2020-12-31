@@ -3,8 +3,10 @@ package com.example.graduate_project.dao.enity;
 import io.swagger.models.auth.In;
 
 import java.util.List;
+import java.util.Map;
 
 public class Result {
+    private Map<String, Integer> graph12;
     private List<List<String>> synteny;
     private List<String> syntenyNum;
     private List<List<String>> blocks;
@@ -12,13 +14,23 @@ public class Result {
     private List<String> countNum;
     private List<String> splitChoseAnimalName;
 
-    public Result(List<List<String>> synteny, List<String> syntenyNum, List<List<String>> blocks, List<String> animalName, List<String> countNum, List<String> splitChoseAnimalName) {
+    public Map<String, Integer> getGraph12() {
+        return graph12;
+    }
+
+    public void setGraph12(Map<String, Integer> graph12) {
+        this.graph12 = graph12;
+    }
+
+    public Result(List<List<String>> synteny, List<String> syntenyNum, List<List<String>> blocks, List<String> animalName, List<String> countNum,
+                  List<String> splitChoseAnimalName, Map<String, Integer> graph12) {
         this.synteny = synteny;
         this.syntenyNum = syntenyNum;
         this.blocks = blocks;
         this.animalName = animalName;
         this.countNum = countNum;
         this.splitChoseAnimalName = splitChoseAnimalName;
+        this.graph12 = graph12;
     }
 
     public List<String> getSplitChoseAnimalName() {

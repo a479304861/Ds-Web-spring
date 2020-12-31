@@ -152,8 +152,51 @@ public class FileServicesImpl extends BaseService {
             e.printStackTrace();
             return ResponseResult.FAILED("失败");
         }
-
         return ResponseResult.SUCCESS();
+    }
+
+    private Map<String, Integer> getGraph12(String fileId, String countNum, List<String> animalNameSplitCross, List<String> syntenyNum) throws IOException {
+        List<String> countNumList = getCountNumList(countNum);
+        List<List<String>> blocksListList = getBlockList(fileId);       //处理blockList
+        Map<String, Integer> map = new HashMap<>();
+        for (int i = 0; i < syntenyNum.size(); i++) {       //遍历每个syn
+            if (Integer.parseInt(syntenyNum.get(i)) >= 3) {
+                List<Integer> animalIntList = new ArrayList<>();    //存放物种当前syn所对应的每个个数
+                for (int j = 0; j < countNumList.size() - 1; j++) {     //遍历每个物种
+                    int tempNum = 0;    //当前物种对应的个数
+                    for (int k = Integer.parseInt(countNumList.get(j)); k < Integer.parseInt(countNumList.get(j + 1)); k++) {   //遍历当前物种的所有bocklist
+                        List<String> blocksList = blocksListList.get(k);        //0-22
+                        for (String blockKey : blocksList) {
+                            if (Math.abs(Integer.parseInt(blockKey)) == i) {
+                                tempNum++;
+                            }
+                        }
+                    }
+                    if (tempNum == 0) {     //如果有个物种的当前syn为0就放弃
+                        break;
+                    }
+                    animalIntList.add(tempNum);
+                }
+                if (animalIntList.size() != animalNameSplitCross.size()) {  //并非所有物种都有就找下一个
+                    continue;
+                }
+                StringBuilder key = new StringBuilder();
+                for (int k = 0; k < animalIntList.size(); k++) {
+                    key.append(animalIntList.get(k));
+                    if (k != animalIntList.size() - 1) {
+                        key.append("-");
+                    }
+                }
+                Integer integer = map.get(key.toString());
+                if (integer == null) {
+                    integer = 1;
+                } else {
+                    integer++;
+                }
+                map.put(key.toString(), integer);
+            }
+        }
+        return map;
     }
 
     public void writeToFileByAnimal(String writeString,
@@ -162,7 +205,7 @@ public class FileServicesImpl extends BaseService {
                                     List<String> animalNameSplitCross,
                                     String last) {
         assert writeString != null;
-        List<String> blockList = TextUtils.splitEnter(writeString,isLinux);
+        List<String> blockList = TextUtils.splitEnter(writeString, isLinux);
 
         int nowIndex = 0;
         //获得listByAnimal
@@ -251,7 +294,7 @@ public class FileServicesImpl extends BaseService {
         try {
             String fileString = readFile(file);
             assert fileString != null;
-            List<String> fileList = TextUtils.splitEnter(fileString,isLinux);
+            List<String> fileList = TextUtils.splitEnter(fileString, isLinux);
             List<String> countNumList = TextUtils.splitCross(countNum);
             int countNumAll = 0;
             for (String s : countNumList) {
@@ -323,25 +366,25 @@ public class FileServicesImpl extends BaseService {
     /**
      * 获得结果
      *
-     * @param id
+     * @param fileID
      * @return
      */
-    public ResponseResult getResult(String id) {
-        if (id == null) {
-            id = CookieUtils.getCookie(getRequest(), ConstantUtils.NAMO_SUM_RESULT_KEY);
-            if (id == null) {
+    public ResponseResult getResult(String fileID) {
+        if (fileID == null) {
+            fileID = CookieUtils.getCookie(getRequest(), ConstantUtils.NAMO_SUM_RESULT_KEY);
+            if (fileID == null) {
                 return ResponseResult.FAILED();
             }
         }
-        if (fileDao.findOneById(id) == null) {
+        if (fileDao.findOneById(fileID) == null) {
             return ResponseResult.FAILED("数据不存在,请刷新后重试");
         }
         Result result = null;
         try {
-            List<List<String>> blocksListList = getBlockList(id);       //处理blockList
+            List<List<String>> blocksListList = getBlockList(fileID);       //处理blockList
             List<String> syntenyNum = new ArrayList<>();
-            List<List<String>> syntenyListsList = getSynList(id, syntenyNum);
-            NamoSunUser oneById = fileDao.findOneById(id);
+            List<List<String>> syntenyListsList = getSynList(fileID, syntenyNum);
+            NamoSunUser oneById = fileDao.findOneById(fileID);
             String animalName = oneById.getAnimalName();
             String countNum = oneById.getCountNum();
             List<String> splitAnimalByDao = TextUtils.splitCross(animalName);
@@ -352,7 +395,7 @@ public class FileServicesImpl extends BaseService {
                 List<String> splitSpace = TextUtils.splitColon(cookieChoseAnimalName);
                 String choseAnimalNameIndex = splitSpace.get(1);
                 String cookieId = splitSpace.get(0);
-                if (cookieId.equals(id)) {
+                if (cookieId.equals(fileID)) {
                     List<String> splitCross = TextUtils.splitCross(choseAnimalNameIndex);
                     splitChoseAnimalName.add(splitAnimalByDao.get(Integer.parseInt(splitCross.get(0))));
                     splitChoseAnimalName.add(splitAnimalByDao.get(Integer.parseInt(splitCross.get(1))));
@@ -360,8 +403,9 @@ public class FileServicesImpl extends BaseService {
             }
             List<String> countNumList = getCountNumList(countNum);
             List<String> animalNameList = TextUtils.splitCross(animalName);
-            CookieUtils.setUpCookie(getResponse(), ConstantUtils.NAMO_SUM_RESULT_KEY, id);
-            result = new Result(syntenyListsList, syntenyNum, blocksListList, animalNameList, countNumList, splitChoseAnimalName);
+            CookieUtils.setUpCookie(getResponse(), ConstantUtils.NAMO_SUM_RESULT_KEY, fileID);
+            Map<String, Integer> graph12 = getGraph12(fileID, countNum, animalNameList, syntenyNum);
+            result = new Result(syntenyListsList, syntenyNum, blocksListList, animalNameList, countNumList, splitChoseAnimalName, graph12);
         } catch (IOException e) {
             e.printStackTrace();
             return ResponseResult.FAILED("错误，请刷新后重试");
@@ -376,7 +420,7 @@ public class FileServicesImpl extends BaseService {
         if (syntenyLists == null) {
             return null;
         }
-        syntenyList = TextUtils.splitEnter(syntenyLists,isLinux);
+        syntenyList = TextUtils.splitEnter(syntenyLists, isLinux);
 
         List<List<String>> syntenyListsList = new ArrayList<>();
         for (String s : syntenyList) {
@@ -398,7 +442,7 @@ public class FileServicesImpl extends BaseService {
         if (blocksList == null) {
             return null;
         }
-        List<String> blocksLists = TextUtils.splitEnter(blocksList,isLinux);
+        List<String> blocksLists = TextUtils.splitEnter(blocksList, isLinux);
         List<List<String>> blocksListList = new ArrayList<>();
         for (String s : blocksLists) {
             List<String> strings = new ArrayList<>(Arrays.asList(s.split(" ")));
