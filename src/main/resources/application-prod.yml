@@ -41,8 +41,9 @@ spring:
     static-locations: classpath:/META-INF/resources/,classpath:/resources/static/,classpath:/static/,classpath:/public
 
 
-Namosun.graduate.file.save-path: /namosun
+Namosun.graduate.file.save-path: /namosun/input
 Namosun.graduate.program-path: /namosun/Program.exe
+Namosun.graduate.program-download-path: /namosun/Program.zip
 Namosun.graduate.out-path: /namosun/output
 Namosun.graduate.isLinux: true
 Namosun.graduate.domain: 47.111.13.56

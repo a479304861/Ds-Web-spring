@@ -1,16 +1,24 @@
 package com.example.graduate_project.utiles;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+@Component
 public class TextUtils {
 
+    public static boolean isLinux;
+
+    @Value("${Namosun.graduate.isLinux}")
+    public void setIsLinux(boolean isLinux) {
+        TextUtils.isLinux = isLinux;
+    }
 
 
-    public static List<String> splitEnter(String s, boolean isLinux) {
+    public static List<String> splitEnter(String s) {
         String[] split;
         if (isLinux) {
             split = s.split("\\n");

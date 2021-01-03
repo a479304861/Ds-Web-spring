@@ -30,10 +30,7 @@ public class RunExeUtils {
 
     public static void openRun(List<String> param) throws InterruptedException, IOException {
         Process process = new ProcessBuilder(param).start();
-        System.out.println(process.isAlive());          //true
         process.waitFor();
-        System.out.println(process.isAlive());           //false
-
     }
 
     public static void main(String[] args) {
@@ -48,7 +45,7 @@ public class RunExeUtils {
             System.out.println(process.isAlive());     //true
             process.waitFor();
             System.out.println(process.isAlive());
-        } catch (Exception   e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }

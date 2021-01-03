@@ -39,6 +39,9 @@ public class FileServicesImpl extends BaseService {
     @Value("${Namosun.graduate.program-path}")
     public String PROGRAM_PATH;
 
+    @Value("${Namosun.graduate.program-download-path}")
+    public String PROGRAM_DOWNLOAD_PATH;
+
     @Value("${Namosun.graduate.out-path}")
     public String OUT_PATH;
 
@@ -205,7 +208,7 @@ public class FileServicesImpl extends BaseService {
                                     List<String> animalNameSplitCross,
                                     String last) {
         assert writeString != null;
-        List<String> blockList = TextUtils.splitEnter(writeString, isLinux);
+        List<String> blockList = TextUtils.splitEnter(writeString);
 
         int nowIndex = 0;
         //获得listByAnimal
@@ -294,7 +297,7 @@ public class FileServicesImpl extends BaseService {
         try {
             String fileString = readFile(file);
             assert fileString != null;
-            List<String> fileList = TextUtils.splitEnter(fileString, isLinux);
+            List<String> fileList = TextUtils.splitEnter(fileString);
             List<String> countNumList = TextUtils.splitCross(countNum);
             int countNumAll = 0;
             for (String s : countNumList) {
@@ -420,7 +423,7 @@ public class FileServicesImpl extends BaseService {
         if (syntenyLists == null) {
             return null;
         }
-        syntenyList = TextUtils.splitEnter(syntenyLists, isLinux);
+        syntenyList = TextUtils.splitEnter(syntenyLists);
 
         List<List<String>> syntenyListsList = new ArrayList<>();
         for (String s : syntenyList) {
@@ -442,7 +445,7 @@ public class FileServicesImpl extends BaseService {
         if (blocksList == null) {
             return null;
         }
-        List<String> blocksLists = TextUtils.splitEnter(blocksList, isLinux);
+        List<String> blocksLists = TextUtils.splitEnter(blocksList);
         List<List<String>> blocksListList = new ArrayList<>();
         for (String s : blocksLists) {
             List<String> strings = new ArrayList<>(Arrays.asList(s.split(" ")));
@@ -469,7 +472,7 @@ public class FileServicesImpl extends BaseService {
      * @param fileId 文件id
      * @return
      */
-    public void download(String fileId) {
+    public void downloadFile(String fileId) {
         if (fileId == null) {
             fileId = CookieUtils.getCookie(getRequest(), ConstantUtils.NAMO_SUM_RESULT_KEY);
             if (fileId == null) {
@@ -512,10 +515,14 @@ public class FileServicesImpl extends BaseService {
 //        return entity;
 
 
+        downloadZip(fileId, zipTarget.getPath());
+    }
+
+    public void downloadZip(String zipName, String path) {
         try {
             HttpServletResponse response = getResponse();
             response.setCharacterEncoding("UTF-8");
-            BufferedInputStream fis = new BufferedInputStream(new FileInputStream(zipTarget.getPath()));
+            BufferedInputStream fis = new BufferedInputStream(new FileInputStream(path));
             byte[] buffer = new byte[fis.available()];
             fis.read(buffer);
             fis.close();
@@ -523,14 +530,17 @@ public class FileServicesImpl extends BaseService {
             OutputStream outStream = null;
             outStream = new BufferedOutputStream(response.getOutputStream());
             response.setContentType("application/zip");
-            response.setHeader("Content-Disposition", "attachment;filename=" + new String(fileId.getBytes("UTF-8"), "ISO-8859-1"));
+            response.setHeader("Content-Disposition", "attachment;filename=" + new String(zipName.getBytes("UTF-8"), "ISO-8859-1"));
             outStream.write(buffer);
             outStream.flush();
             outStream.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
 
+    public  void downloadProgram(){
+        downloadZip("program", PROGRAM_DOWNLOAD_PATH);
     }
 
     /**

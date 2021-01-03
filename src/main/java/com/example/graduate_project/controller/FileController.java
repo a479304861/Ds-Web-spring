@@ -4,7 +4,6 @@ import com.example.graduate_project.dao.enity.ResponseResult;
 import com.example.graduate_project.interceptor.CheckTooFrequentCommit;
 import com.example.graduate_project.service.impl.FileServicesImpl;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -59,7 +58,12 @@ public class FileController {
 
     @GetMapping("/download")
     public void download(@RequestParam(value = "id", required = false) String fileId) {
-       fileService.download(fileId);
+       fileService.downloadFile(fileId);
+    }
+
+    @GetMapping("/downloadProgram")
+    public void downloadProgram() {
+        fileService.downloadProgram();
     }
 
     @DeleteMapping("/deleteAll")
