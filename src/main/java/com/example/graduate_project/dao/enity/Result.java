@@ -1,36 +1,52 @@
 package com.example.graduate_project.dao.enity;
 
-import io.swagger.models.auth.In;
+import com.vladsch.flexmark.util.Pair;
 
 import java.util.List;
-import java.util.Map;
 
 public class Result {
-    private Map<String, Integer> graph12;
-    private List<List<String>> synteny;
-    private List<String> syntenyNum;
+    private  List<Graph3.Graph3Node> graph3;
+    private List<Integer> graph11;
+    private List<Pair<String,Integer>> graph12;
     private List<List<String>> blocks;
     private List<String> animalName;
     private List<String> countNum;
     private List<String> splitChoseAnimalName;
 
-    public Map<String, Integer> getGraph12() {
+    public List<Graph3.Graph3Node> getGraph3() {
+        return graph3;
+    }
+
+    public void setGraph3(List<Graph3.Graph3Node> graph3) {
+        this.graph3 = graph3;
+    }
+
+    public List<Integer> getGraph11() {
+        return graph11;
+    }
+
+    public void setGraph11(List<Integer> graph11) {
+        this.graph11 = graph11;
+    }
+
+    public List<Pair<String, Integer>> getGraph12() {
         return graph12;
     }
 
-    public void setGraph12(Map<String, Integer> graph12) {
+    public void setGraph12(List<Pair<String, Integer>> graph12) {
         this.graph12 = graph12;
     }
 
-    public Result(List<List<String>> synteny, List<String> syntenyNum, List<List<String>> blocks, List<String> animalName, List<String> countNum,
-                  List<String> splitChoseAnimalName, Map<String, Integer> graph12) {
-        this.synteny = synteny;
-        this.syntenyNum = syntenyNum;
+    public Result(List<List<String>> blocks, List<String> animalName, List<String> countNum,
+                  List<String> splitChoseAnimalName, List<Pair<String, Integer>> graph12, List<Integer> graph11, List<Graph3.Graph3Node> graph3) {
+
         this.blocks = blocks;
         this.animalName = animalName;
         this.countNum = countNum;
         this.splitChoseAnimalName = splitChoseAnimalName;
         this.graph12 = graph12;
+        this.graph11 = graph11;
+        this.graph3 =graph3;
     }
 
     public List<String> getSplitChoseAnimalName() {
@@ -41,21 +57,7 @@ public class Result {
         this.splitChoseAnimalName = splitChoseAnimalName;
     }
 
-    public List<List<String>> getSynteny() {
-        return synteny;
-    }
 
-    public void setSynteny(List<List<String>> synteny) {
-        this.synteny = synteny;
-    }
-
-    public List<String> getSyntenyNum() {
-        return syntenyNum;
-    }
-
-    public void setSyntenyNum(List<String> syntenyNum) {
-        this.syntenyNum = syntenyNum;
-    }
 
     public List<List<String>> getBlocks() {
         return blocks;

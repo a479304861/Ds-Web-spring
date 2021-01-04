@@ -1,26 +1,19 @@
 package com.example.graduate_project.service.impl;
 
 import com.example.graduate_project.dao.NamosunUserDao;
-import com.example.graduate_project.dao.enity.DetailResult;
-import com.example.graduate_project.dao.enity.NamoSunUser;
-import com.example.graduate_project.dao.enity.ResponseResult;
-import com.example.graduate_project.dao.enity.Result;
+import com.example.graduate_project.dao.enity.*;
 import com.example.graduate_project.utiles.*;
+import com.vladsch.flexmark.util.Pair;
+import io.swagger.models.auth.In;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-import org.w3c.dom.Text;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
-
-import java.lang.reflect.Array;
 import java.util.*;
 
 
@@ -382,11 +375,11 @@ public class FileServicesImpl extends BaseService {
         if (fileDao.findOneById(fileID) == null) {
             return ResponseResult.FAILED("数据不存在,请刷新后重试");
         }
-        Result result = null;
+        Result result;
         try {
             List<List<String>> blocksListList = getBlockList(fileID);       //处理blockList
             List<String> syntenyNum = new ArrayList<>();
-            List<List<String>> syntenyListsList = getSynList(fileID, syntenyNum);
+            getSynList(fileID, syntenyNum);
             NamoSunUser oneById = fileDao.findOneById(fileID);
             String animalName = oneById.getAnimalName();
             String countNum = oneById.getCountNum();
@@ -407,8 +400,57 @@ public class FileServicesImpl extends BaseService {
             List<String> countNumList = getCountNumList(countNum);
             List<String> animalNameList = TextUtils.splitCross(animalName);
             CookieUtils.setUpCookie(getResponse(), ConstantUtils.NAMO_SUM_RESULT_KEY, fileID);
-            Map<String, Integer> graph12 = getGraph12(fileID, countNum, animalNameList, syntenyNum);
-            result = new Result(syntenyListsList, syntenyNum, blocksListList, animalNameList, countNumList, splitChoseAnimalName, graph12);
+            Map<String, Integer> graph12Temp = getGraph12(fileID, countNum, animalNameList, syntenyNum);
+            // 计算图一图三所有结果并返回
+            List<Integer> graph11 = getGraph11(blocksListList, countNumList);
+            List<Pair<String, Integer>> graph12 = new ArrayList<>();
+            graph12Temp.forEach((key, val) -> {
+                graph12.add(Pair.of(key, val));
+            });
+            graph12.sort((a, b) -> b.getSecond().compareTo(a.getSecond()));
+            //图三
+            Graph3 graph3 = new Graph3();
+            for (int i = 0; i < countNumList.size() - 1; i++) {
+                Graph3.Graph3Node graph3Node = new Graph3.Graph3Node();
+
+                int tempCategory = 0;
+                for (int j = Integer.parseInt(countNumList.get(i)); j < Integer.parseInt(countNumList.get(i + 1)); j++) {
+                    for (int k = 0; k < blocksListList.get(j).size(); k++) {
+                        Graph3.Graph3Node.Node node = new Graph3.Graph3Node.Node();
+                        node.setCategory(tempCategory);
+                        node.setValue(blocksListList.get(j).get(k));
+                        graph3Node.getNodes().add(node);
+                    }
+                    tempCategory++;
+                }
+                graph3.getGraph3().add(graph3Node);
+            }
+            for (int i = 0; i < graph3.getGraph3().size(); i++) {
+                int index = 0;
+                for (int j = 0; j < graph3.getGraph3().get(i).getNodes().size(); j++) {
+                    for (int k = j + 1; k < graph3.getGraph3().get(i).getNodes().size(); k++) {
+                        if (Math.abs(Integer.parseInt(graph3.getGraph3().get(i).getNodes().get(j).getValue()))
+                                == Math.abs(Integer.parseInt(graph3.getGraph3().get(i).getNodes().get(k).getValue()))) {
+                            Graph3.Graph3Node.Link link = new Graph3.Graph3Node.Link();
+                            link.setId(index);
+                            link.setSource(j);
+                            link.setTarget(k);
+                            link.setSourceSyn(graph3.getGraph3().get(i).getNodes().get(j).getCategory());
+                            link.setTargetSyn(graph3.getGraph3().get(i).getNodes().get(k).getCategory());
+                            graph3.getGraph3().get(i).getLinks().add(link);
+                        }
+                    }
+                }
+                if (graph3.getGraph3().get(i).getLinks().size() > 1000) {
+                    int step = graph3.getGraph3().get(i).getLinks().size() / 1000;
+                    List<Graph3.Graph3Node.Link> links = new ArrayList<>();
+                    for (int i1 = 0; i1 < graph3.getGraph3().get(i).getLinks().size(); i1 += step) {
+                        links.add(graph3.getGraph3().get(i).getLinks().get(i1));
+                    }
+                    graph3.getGraph3().get(i).setLinks(links);
+                }
+            }
+            result = new Result(blocksListList, animalNameList, countNumList, splitChoseAnimalName, graph12, graph11, graph3.getGraph3());
         } catch (IOException e) {
             e.printStackTrace();
             return ResponseResult.FAILED("错误，请刷新后重试");
@@ -416,10 +458,27 @@ public class FileServicesImpl extends BaseService {
         return ResponseResult.SUCCESS().setData(result);
     }
 
+    public List<Integer> getGraph11(List<List<String>> blocksListList, List<String> countNumList) {
+        List<Integer> graph11 = new ArrayList<>();
+        int curNum = 0;
+        for (int i = 0; i < countNumList.size() - 1; i++) {
+            {
+                int num = 0;
+                for (int j = curNum; j < Integer.parseInt(countNumList.get(i + 1)); j++) {
+                    num += blocksListList.get(i).size();
+                }
+
+                graph11.add(num);
+                curNum = Integer.parseInt(countNumList.get(i + 1));
+            }
+        }
+        return graph11;
+    }
+
     private List<List<String>> getSynList(String id, List<String> syntenyNum) throws IOException {
         File synteny = new File(OUT_PATH + File.separator + id + File.separator + "synteny.txt");
         String syntenyLists = readFile(synteny);
-        List<String> syntenyList = null;
+        List<String> syntenyList;
         if (syntenyLists == null) {
             return null;
         }
@@ -527,7 +586,7 @@ public class FileServicesImpl extends BaseService {
             fis.read(buffer);
             fis.close();
             response.reset();
-            OutputStream outStream = null;
+            OutputStream outStream;
             outStream = new BufferedOutputStream(response.getOutputStream());
             response.setContentType("application/zip");
             response.setHeader("Content-Disposition", "attachment;filename=" + new String(zipName.getBytes("UTF-8"), "ISO-8859-1"));
@@ -539,7 +598,7 @@ public class FileServicesImpl extends BaseService {
         }
     }
 
-    public  void downloadProgram(){
+    public void downloadProgram() {
         downloadZip("program", PROGRAM_DOWNLOAD_PATH);
     }
 
