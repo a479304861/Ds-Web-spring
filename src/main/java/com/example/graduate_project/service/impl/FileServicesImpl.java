@@ -441,8 +441,8 @@ public class FileServicesImpl extends BaseService {
                         }
                     }
                 }
-                if (graph3.getGraph3().get(i).getLinks().size() > 1000) {
-                    int step = graph3.getGraph3().get(i).getLinks().size() / 1000;
+                if (graph3.getGraph3().get(i).getLinks().size() > 512) {
+                    int step = graph3.getGraph3().get(i).getLinks().size() / 512;
                     List<Graph3.Graph3Node.Link> links = new ArrayList<>();
                     for (int i1 = 0; i1 < graph3.getGraph3().get(i).getLinks().size(); i1 += step) {
                         links.add(graph3.getGraph3().get(i).getLinks().get(i1));
@@ -515,13 +515,14 @@ public class FileServicesImpl extends BaseService {
 
     private List<String> getCountNumList(String countNum) {
         List<String> countNumList = TextUtils.splitCross(countNum);
-
-        for (int i = 1; i < countNumList.size(); i++) {
-            countNumList.set(i, String.valueOf(Integer.parseInt(countNumList.get(i - 1)) + Integer.parseInt(countNumList.get(i))));
+        List<String> result = new ArrayList<>();
+        result.add("0");
+        int count = 0;
+        for (String s : countNumList) {
+            count += Integer.parseInt(s);
+            result.add(String.valueOf(count));
         }
-        countNumList.add("0");
-        countNumList.sort(Comparator.naturalOrder());
-        return countNumList;
+        return result;
     }
 
 
