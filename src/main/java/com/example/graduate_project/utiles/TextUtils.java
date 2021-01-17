@@ -28,6 +28,18 @@ public class TextUtils {
         return new ArrayList<>(Arrays.asList(split));
     }
 
+    public static List<String> splitComma(String s) {
+        String[] split;
+        split = s.split(",");
+        return new ArrayList<>(Arrays.asList(split));
+    }
+
+    public static List<String> splitTab(String s) {
+        String[] split;
+        split = s.split("\\t");
+        return new ArrayList<>(Arrays.asList(split));
+    }
+
     public static List<String> splitCross(String s) {
         String[] split = s.split("-");
         return new ArrayList<>(Arrays.asList(split));

@@ -17,7 +17,17 @@ public class FileController {
     @CrossOrigin(origins = "*", maxAge = 3600)
     @PostMapping(value = "/upload")
     public ResponseResult uploadFile(@RequestParam("file") MultipartFile uploadFile) {
-        return fileService.upload(uploadFile);
+        return fileService.uploadSequence(uploadFile);
+    }
+
+    @PostMapping(value = "/uploadOrthogroups")
+    public ResponseResult uploadOrthogroups(@RequestParam("file") MultipartFile uploadFile) {
+        return fileService.uploadOrthogroups(uploadFile);
+    }
+
+    @PostMapping(value = "/uploadGFF")
+    public ResponseResult uploadGFF(@RequestParam("file") MultipartFile uploadFile, @RequestParam("fileId") String fileId) {
+        return fileService.uploadGFF(uploadFile, fileId);
     }
 
     @CheckTooFrequentCommit
@@ -40,6 +50,16 @@ public class FileController {
         return fileService.submit(id, cycleLengthThreshold, dustLengthThreshold, countNum, animalName);
     }
 
+    @GetMapping(value = "/submitGFF")
+    public ResponseResult submitGFF(@RequestParam(value = "id") String id,
+                                    @RequestParam(value = "cycleLengthThreshold") String cycleLengthThreshold,
+                                    @RequestParam(value = "dustLengthThreshold") String dustLengthThreshold,
+                                    @RequestParam(value = "countNum") String countNum,
+                                    @RequestParam(value = "animalName") String animalName,
+                                    @RequestParam(value = "size", required = false) Integer size) {
+        return fileService.submitGFF(id, cycleLengthThreshold, dustLengthThreshold, countNum, animalName, size);
+    }
+
     @GetMapping(value = "/delete")
     public ResponseResult delete(@RequestParam(value = "id") String id) {
         return fileService.delete(id);
@@ -58,7 +78,7 @@ public class FileController {
 
     @GetMapping("/download")
     public void download(@RequestParam(value = "id", required = false) String fileId) {
-       fileService.downloadFile(fileId);
+        fileService.downloadFile(fileId);
     }
 
     @GetMapping("/downloadProgram")
@@ -70,7 +90,6 @@ public class FileController {
     public ResponseResult deleteAll() {
         return fileService.deleteAll();
     }
-
 
 
 }

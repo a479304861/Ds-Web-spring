@@ -14,6 +14,12 @@ public interface ConstantUtils {
     interface User {
         String KEY_COMMIT = "key_commit";
     }
+    interface Complete{
+        String SequenceUpload="0";
+        String SequenceSubmit="1";
+        String SequenceComp="2";
+        String OrthogroupUpload="3";
+    }
 
 
 }

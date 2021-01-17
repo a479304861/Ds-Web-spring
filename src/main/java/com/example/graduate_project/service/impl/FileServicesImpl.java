@@ -16,6 +16,9 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.util.*;
 
+import static com.example.graduate_project.utiles.TextUtils.splitComma;
+import static com.example.graduate_project.utiles.TextUtils.splitTab;
+
 
 @Service
 @Transactional
@@ -52,7 +55,7 @@ public class FileServicesImpl extends BaseService {
      * @param file
      * @return
      */
-    public ResponseResult upload(MultipartFile file) {
+    public ResponseResult uploadSequence(MultipartFile file) {
         if (file == null) {
             return ResponseResult.FAILED("上传失败，上传数据为空");
         }
@@ -83,7 +86,7 @@ public class FileServicesImpl extends BaseService {
 
         NamoSunUser namoSunFile = new NamoSunUser();
         namoSunFile.setId(fileId);
-        namoSunFile.setComplete("0");
+        namoSunFile.setComplete(ConstantUtils.Complete.SequenceUpload);
         namoSunFile.setCreateTime(new Date());
         namoSunFile.setOriName(file.getOriginalFilename());
         namoSunFile.setUserId(cookie);
@@ -126,7 +129,7 @@ public class FileServicesImpl extends BaseService {
             return ResponseResult.FAILED("失败");
         }
         //储存到数据库
-        oneByFileId.setComplete("2");
+        oneByFileId.setComplete(ConstantUtils.Complete.SequenceComp);
         oneByFileId.setAnimalName(animalName);
         oneByFileId.setCountNum(countNum);
         oneByFileId.setCycleLengthThreshold(cycleLengthThreshold);
@@ -156,6 +159,7 @@ public class FileServicesImpl extends BaseService {
         List<List<String>> blocksListList = getBlockList(fileId);       //处理blockList
         Map<String, Integer> map = new HashMap<>();
         for (int i = 0; i < syntenyNum.size(); i++) {       //遍历每个syn
+            //TODO:3需要动态获取
             if (Integer.parseInt(syntenyNum.get(i)) >= 3) {
                 List<Integer> animalIntList = new ArrayList<>();    //存放物种当前syn所对应的每个个数
                 for (int j = 0; j < countNumList.size() - 1; j++) {     //遍历每个物种
@@ -247,7 +251,7 @@ public class FileServicesImpl extends BaseService {
         if (Integer.parseInt(cycleLengthThreshold) > 100 || Integer.parseInt(cycleLengthThreshold) < 10) {
             return false;
         }
-        if (Integer.parseInt(dustLengthThreshold) > 10 || Integer.parseInt(dustLengthThreshold) < 5) {
+        if (Integer.parseInt(dustLengthThreshold) > 30 || Integer.parseInt(dustLengthThreshold) < 0) {
             return false;
         }
         return true;
@@ -269,19 +273,13 @@ public class FileServicesImpl extends BaseService {
     }
 
 
-    /**
-     * 提交
-     *
-     * @param fileId
-     * @param cycleLengthThreshold
-     * @param dustLengthThreshold
-     * @param countNum
-     * @param animalName
-     * @return
-     */
     public ResponseResult submit(String fileId, String cycleLengthThreshold, String dustLengthThreshold, String countNum, String animalName) {
         if (!checkParams(fileId, cycleLengthThreshold, dustLengthThreshold)) {
             return ResponseResult.FAILED("输入不正确");
+        }
+        NamoSunUser oneById = fileDao.findOneById(fileId);
+        if (oneById == null) {
+            return ResponseResult.FAILED("文件不存在");
         }
         File file = new File(INPUT_PATH + File.separator + fileId + ".sequence");
         if (!file.exists() || fileDao.findOneById(fileId) == null) {
@@ -311,7 +309,7 @@ public class FileServicesImpl extends BaseService {
         oneByFileId.setCountNum(countNum);
         oneByFileId.setCycleLengthThreshold(cycleLengthThreshold);
         oneByFileId.setDustLengthThreshold(dustLengthThreshold);
-        oneByFileId.setComplete("1");
+        oneByFileId.setComplete(ConstantUtils.Complete.SequenceSubmit);
         fileDao.save(oneByFileId);
         return ResponseResult.SUCCESS("提交成功");
     }
@@ -384,7 +382,6 @@ public class FileServicesImpl extends BaseService {
             String animalName = oneById.getAnimalName();
             String countNum = oneById.getCountNum();
             List<String> splitAnimalByDao = TextUtils.splitCross(animalName);
-
             String cookieChoseAnimalName = CookieUtils.getCookie(getRequest(), ConstantUtils.NAMO_SUM_ANIMAL_NAME_KEY);
             List<String> splitChoseAnimalName = new ArrayList<>();
             if (cookieChoseAnimalName != null) {
@@ -400,10 +397,10 @@ public class FileServicesImpl extends BaseService {
             List<String> countNumList = getCountNumList(countNum);
             List<String> animalNameList = TextUtils.splitCross(animalName);
             CookieUtils.setUpCookie(getResponse(), ConstantUtils.NAMO_SUM_RESULT_KEY, fileID);
-            Map<String, Integer> graph12Temp = getGraph12(fileID, countNum, animalNameList, syntenyNum);
             // 计算图一图三所有结果并返回
             List<Integer> graph11 = getGraph11(blocksListList, countNumList);
             List<Pair<String, Integer>> graph12 = new ArrayList<>();
+            Map<String, Integer> graph12Temp = getGraph12(fileID, countNum, animalNameList, syntenyNum);
             graph12Temp.forEach((key, val) -> {
                 graph12.add(Pair.of(key, val));
             });
@@ -831,5 +828,182 @@ public class FileServicesImpl extends BaseService {
         delFile(new File(targetOutPath));
         delFile(new File(targetInputPath));
         return ResponseResult.SUCCESS();
+    }
+
+    public ResponseResult uploadOrthogroups(MultipartFile file) {
+        if (file == null) {
+            return ResponseResult.FAILED("上传失败，上传数据为空");
+        }
+        System.out.println(file.getContentType());
+        String cookie = CookieUtils.getCookie(getRequest(), ConstantUtils.NAMO_SUM_KEY);
+        if (cookie == null) {
+            return ResponseResult.FAILED("没有登入错误");
+        }
+        if (TextUtils.isEmpty(file.getName())) {
+            return ResponseResult.FAILED("文件名为空错误");
+        }
+        String fileId = idWorker.nextId() + "";
+        try {
+            String targetPath = INPUT_PATH + File.separator + fileId + File.separator + "Orthogroups.tsv";
+            File targetFile = new File(targetPath);
+            if (!targetFile.getParentFile().getParentFile().exists()) {
+                targetFile.getParentFile().getParentFile().mkdirs();
+            }
+            if (!targetFile.getParentFile().exists()) {
+                targetFile.getParentFile().mkdirs();
+            }
+            try {
+                file.transferTo(targetFile);
+                //保存文件在数据库
+            } catch (Exception e) {
+                return ResponseResult.FAILED("上传失败,请稍后重试");
+            }
+        } catch (Exception e) {
+            return ResponseResult.FAILED("系统异常，上传失败");
+        }
+
+        NamoSunUser namoSunFile = new NamoSunUser();
+        namoSunFile.setId(fileId);
+        namoSunFile.setComplete(ConstantUtils.Complete.OrthogroupUpload);
+        namoSunFile.setCreateTime(new Date());
+        namoSunFile.setOriName(file.getOriginalFilename());
+        namoSunFile.setUserId(cookie);
+        fileDao.save(namoSunFile);
+        return ResponseResult.SUCCESS().setData(fileId);
+    }
+
+    public ResponseResult uploadGFF(MultipartFile file, String fileId) {
+        if (file == null) {
+            return ResponseResult.FAILED("上传失败，上传数据为空");
+        }
+        System.out.println(file.getContentType());
+        String cookie = CookieUtils.getCookie(getRequest(), ConstantUtils.NAMO_SUM_KEY);
+        if (cookie == null) {
+            return ResponseResult.FAILED("没有登入错误");
+        }
+        if (TextUtils.isEmpty(file.getName())) {
+            return ResponseResult.FAILED("文件名为空错误");
+        }
+        try {
+            String targetPath = INPUT_PATH + File.separator + fileId + File.separator + file.getOriginalFilename();
+            File targetFile = new File(targetPath);
+            try {
+                file.transferTo(targetFile);
+            } catch (Exception e) {
+                return ResponseResult.FAILED("上传失败,请稍后重试");
+            }
+        } catch (Exception e) {
+            return ResponseResult.FAILED("系统异常，上传失败");
+        }
+        return ResponseResult.SUCCESS();
+    }
+
+    public ResponseResult submitGFF(String fileId,
+                                    String cycleLengthThreshold,
+                                    String dustLengthThreshold,
+                                    String countNum,
+                                    String animalName,
+                                    Integer size) {
+        if (size == null) size = 4;
+        String orthogroups;
+        List<String> genomes = new ArrayList<>();
+        List<String> splitCrossByAnimalName = TextUtils.splitCross(animalName);
+        try {
+            File OrthogroupsFile = new File(INPUT_PATH + File.separator + fileId + File.separator + "Orthogroups.tsv");
+            if (!OrthogroupsFile.exists())
+                return ResponseResult.FAILED("Orthogroups未上传");
+            orthogroups = readFile(OrthogroupsFile);
+            for (String animalGenome : splitCrossByAnimalName) {
+                File genomeFile = new File(INPUT_PATH + File.separator + fileId + File.separator + animalGenome + ".gff");
+                if (!genomeFile.exists())
+                    return ResponseResult.FAILED("文件与物种不匹配");
+                genomes.add(readFile(genomeFile));
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            return ResponseResult.FAILED("打开文件失败");
+        }
+        if (TextUtils.isEmpty(orthogroups)) {
+            return ResponseResult.FAILED("有文件未上传");
+        }
+        List<String> splitEnter = TextUtils.splitEnter(orthogroups);
+        List<List<List<String>>> orthoList = new ArrayList<>();
+        Map<String, Integer> tempHashMap = new HashMap<>();
+        int nowIndex = 0;
+        for (int i = 0; i < splitEnter.size(); i++) {
+            List<String> splitTab = splitTab(splitEnter.get(i));
+            List<List<String>> arrayLists = new ArrayList<>();
+            List<String> first = new ArrayList<>();
+            first.add(splitTab.get(0));
+            arrayLists.add(first);
+            for (int j = 1; j < splitTab.size(); j++) {
+                if (splitTab.get(j).equals("")) {
+                    break;
+                }
+                List<String> splitComma = splitComma(splitTab.get(j));
+                if (splitComma.size() > size) {
+                    break;
+                }
+                for (String item : splitComma) {
+                    tempHashMap.put(item, nowIndex);
+                }
+                arrayLists.add(splitComma);
+            }
+            if (i == 0 || arrayLists.size() == orthoList.get(0).size()) {
+                orthoList.add(arrayLists);
+                nowIndex++;
+            }
+        }
+        List<List<String>> sequence = new ArrayList<>();
+
+        for (String genome : genomes) {
+            sequence.addAll(readGFF(genome, tempHashMap));
+        }
+        //打散,简化
+        StringBuilder stringBuilder = new StringBuilder();
+        for (List<String> chroms : sequence) {
+            for (String chrom : chroms) {
+                stringBuilder.append(chrom);
+                if (chroms.indexOf(chrom) != chroms.size() - 1) {
+                    stringBuilder.append(" ");
+                }
+            }
+            if (sequence.indexOf(chroms) != sequence.size() - 1) {
+                stringBuilder.append("\r\n");
+            }
+        }
+        try {
+            stringWriteToFile(INPUT_PATH + File.separator + fileId + ".sequence", stringBuilder.toString());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        submit(fileId, cycleLengthThreshold, dustLengthThreshold, countNum, animalName);
+        calculate(fileId, cycleLengthThreshold, dustLengthThreshold, countNum, animalName);
+        return ResponseResult.SUCCESS();
+    }
+
+    public static List<List<String>> readGFF(String genome, Map<String, Integer> hashMapList) {
+        List<String> splitEnter = TextUtils.splitEnter(genome);
+        List<List<String>> result = new ArrayList<>();
+        String nowIndex = "";
+        List<String> nowList = new ArrayList<>();
+        for (int i = 0; i < splitEnter.size(); i++) {
+            List<String> splitTab = splitTab(splitEnter.get(i));
+            if (i == 0) {
+                nowIndex = splitTab.get(0);
+            }
+            if (splitTab.get(0).equals(nowIndex)) {
+                if (hashMapList.containsKey(splitTab.get(1))) {
+                    nowList.add(String.valueOf(hashMapList.get(splitTab.get(1))));
+                }
+            } else {
+                result.add(nowList);
+                nowList = new ArrayList<>();
+            }
+            nowIndex = splitTab.get(0);
+        }
+        result.add(nowList);
+
+        return result;
     }
 }
