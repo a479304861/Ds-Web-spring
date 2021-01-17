@@ -968,6 +968,7 @@ public class FileServicesImpl extends BaseService {
             if (sequence.indexOf(chroms) != sequence.size() - 1) {
                 stringBuilder.append("\r\n");
             }
+
         }
         try {
             stringWriteToFile(INPUT_PATH + File.separator + fileId + ".sequence", stringBuilder.toString());

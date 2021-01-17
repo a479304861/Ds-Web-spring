@@ -20,6 +20,9 @@ public interface ConstantUtils {
         String SequenceComp="2";
         String OrthogroupUpload="3";
     }
+    interface Setting{
+        String WEB_VIEW_COUNT="1";
+    }
 
 
 }
