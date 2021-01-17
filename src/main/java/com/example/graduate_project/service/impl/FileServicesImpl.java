@@ -398,6 +398,7 @@ public class FileServicesImpl extends BaseService {
             List<String> animalNameList = TextUtils.splitCross(animalName);
             CookieUtils.setUpCookie(getResponse(), ConstantUtils.NAMO_SUM_RESULT_KEY, fileID);
             // 计算图一图三所有结果并返回
+            //TODO:处理graph12需要修改
             List<Integer> graph11 = getGraph11(blocksListList, countNumList);
             List<Pair<String, Integer>> graph12 = new ArrayList<>();
             Map<String, Integer> graph12Temp = getGraph12(fileID, countNum, animalNameList, syntenyNum);
@@ -834,7 +835,6 @@ public class FileServicesImpl extends BaseService {
         if (file == null) {
             return ResponseResult.FAILED("上传失败，上传数据为空");
         }
-        System.out.println(file.getContentType());
         String cookie = CookieUtils.getCookie(getRequest(), ConstantUtils.NAMO_SUM_KEY);
         if (cookie == null) {
             return ResponseResult.FAILED("没有登入错误");
@@ -899,15 +899,16 @@ public class FileServicesImpl extends BaseService {
     }
 
     public ResponseResult submitGFF(String fileId,
-                                    String cycleLengthThreshold,
-                                    String dustLengthThreshold,
                                     String countNum,
                                     String animalName,
                                     Integer size) {
-        if (size == null) size = 4;
+        if (size == null || size == 0) size = 4;
         String orthogroups;
         List<String> genomes = new ArrayList<>();
         List<String> splitCrossByAnimalName = TextUtils.splitCross(animalName);
+        if (fileDao.findOneById(fileId) == null) {
+            return ResponseResult.FAILED("不存在");
+        }
         try {
             File OrthogroupsFile = new File(INPUT_PATH + File.separator + fileId + File.separator + "Orthogroups.tsv");
             if (!OrthogroupsFile.exists())
@@ -923,21 +924,17 @@ public class FileServicesImpl extends BaseService {
             e.printStackTrace();
             return ResponseResult.FAILED("打开文件失败");
         }
-        if (TextUtils.isEmpty(orthogroups)) {
-            return ResponseResult.FAILED("有文件未上传");
-        }
         List<String> splitEnter = TextUtils.splitEnter(orthogroups);
-        List<List<List<String>>> orthoList = new ArrayList<>();
         Map<String, Integer> tempHashMap = new HashMap<>();
-        int nowIndex = 0;
-        for (int i = 0; i < splitEnter.size(); i++) {
+        Map<String, Integer> resultHashMap = new HashMap<>();
+        int nowIndex = 1;
+        int orthoListSize = splitTab(splitEnter.get(0)).size();
+        for (int i = 1; i < splitEnter.size(); i++) {
             List<String> splitTab = splitTab(splitEnter.get(i));
-            List<List<String>> arrayLists = new ArrayList<>();
-            List<String> first = new ArrayList<>();
-            first.add(splitTab.get(0));
-            arrayLists.add(first);
-            for (int j = 1; j < splitTab.size(); j++) {
-                if (splitTab.get(j).equals("")) {
+            List<String> arrayLists = new ArrayList<>();
+            arrayLists.add(splitTab.get(0));          //头组号 OG0000001
+            for (int j = 1; j < splitTab.size(); j++) { //判断是否有3个，且每个基因数量不大于size
+                if (TextUtils.isEmpty(splitTab.get(j))) {
                     break;
                 }
                 List<String> splitComma = splitComma(splitTab.get(j));
@@ -947,19 +944,19 @@ public class FileServicesImpl extends BaseService {
                 for (String item : splitComma) {
                     tempHashMap.put(item, nowIndex);
                 }
-                arrayLists.add(splitComma);
+                arrayLists.add(splitTab.get(j));
             }
-            if (i == 0 || arrayLists.size() == orthoList.get(0).size()) {
-                orthoList.add(arrayLists);
+            if (arrayLists.size() == orthoListSize) {
+                resultHashMap.putAll(tempHashMap);
                 nowIndex++;
             }
+            tempHashMap.clear();
         }
         List<List<String>> sequence = new ArrayList<>();
-
         for (String genome : genomes) {
-            sequence.addAll(readGFF(genome, tempHashMap));
+            sequence.addAll(readGFF(genome, resultHashMap));
         }
-        //打散,简化
+        //TODO:打散,简化
         StringBuilder stringBuilder = new StringBuilder();
         for (List<String> chroms : sequence) {
             for (String chrom : chroms) {
@@ -975,10 +972,8 @@ public class FileServicesImpl extends BaseService {
         try {
             stringWriteToFile(INPUT_PATH + File.separator + fileId + ".sequence", stringBuilder.toString());
         } catch (IOException e) {
-            e.printStackTrace();
+            return ResponseResult.FAILED("写入失败");
         }
-        submit(fileId, cycleLengthThreshold, dustLengthThreshold, countNum, animalName);
-        calculate(fileId, cycleLengthThreshold, dustLengthThreshold, countNum, animalName);
         return ResponseResult.SUCCESS();
     }
 
@@ -992,13 +987,12 @@ public class FileServicesImpl extends BaseService {
             if (i == 0) {
                 nowIndex = splitTab.get(0);
             }
-            if (splitTab.get(0).equals(nowIndex)) {
-                if (hashMapList.containsKey(splitTab.get(1))) {
-                    nowList.add(String.valueOf(hashMapList.get(splitTab.get(1))));
-                }
-            } else {
+            if (!splitTab.get(0).equals(nowIndex)) {
                 result.add(nowList);
                 nowList = new ArrayList<>();
+            }
+            if (hashMapList.containsKey(splitTab.get(1))) {
+                nowList.add(String.valueOf(hashMapList.get(splitTab.get(1))));
             }
             nowIndex = splitTab.get(0);
         }

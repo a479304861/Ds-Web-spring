@@ -30,7 +30,7 @@ public class TextUtils {
 
     public static List<String> splitComma(String s) {
         String[] split;
-        split = s.split(",");
+        split = s.split(", ");
         return new ArrayList<>(Arrays.asList(split));
     }
 

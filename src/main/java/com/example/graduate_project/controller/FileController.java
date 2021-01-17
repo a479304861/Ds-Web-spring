@@ -52,12 +52,10 @@ public class FileController {
 
     @GetMapping(value = "/submitGFF")
     public ResponseResult submitGFF(@RequestParam(value = "id") String id,
-                                    @RequestParam(value = "cycleLengthThreshold") String cycleLengthThreshold,
-                                    @RequestParam(value = "dustLengthThreshold") String dustLengthThreshold,
                                     @RequestParam(value = "countNum") String countNum,
                                     @RequestParam(value = "animalName") String animalName,
                                     @RequestParam(value = "size", required = false) Integer size) {
-        return fileService.submitGFF(id, cycleLengthThreshold, dustLengthThreshold, countNum, animalName, size);
+        return fileService.submitGFF(id, countNum, animalName, size);
     }
 
     @GetMapping(value = "/delete")
