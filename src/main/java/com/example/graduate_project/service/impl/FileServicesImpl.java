@@ -1,6 +1,7 @@
 package com.example.graduate_project.service.impl;
 
 import com.example.graduate_project.dao.NamosunUserDao;
+import com.example.graduate_project.dao.SpecialDao;
 import com.example.graduate_project.dao.enity.*;
 import com.example.graduate_project.utiles.*;
 import com.vladsch.flexmark.util.Pair;
@@ -14,6 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
+import java.math.BigDecimal;
 import java.util.*;
 
 import static com.example.graduate_project.utiles.TextUtils.splitComma;
@@ -46,8 +48,12 @@ public class FileServicesImpl extends BaseService {
 
     @Autowired
     private NamosunUserDao fileDao;
+
+    @Autowired
+    private SpecialDao specialDao;
     //简化点的个数
     private static final int pointNum = 1000;
+    private static final int simpleSize = 40000;
 
     /**
      * 上传
@@ -398,8 +404,8 @@ public class FileServicesImpl extends BaseService {
             List<String> animalNameList = TextUtils.splitCross(animalName);
             CookieUtils.setUpCookie(getResponse(), ConstantUtils.NAMO_SUM_RESULT_KEY, fileID);
             // 计算图一图三所有结果并返回
-            //TODO:处理graph12需要修改
             List<Integer> graph11 = getGraph11(blocksListList, countNumList);
+            //TODO:处理graph12需要修改
             List<Pair<String, Integer>> graph12 = new ArrayList<>();
             Map<String, Integer> graph12Temp = getGraph12(fileID, countNum, animalNameList, syntenyNum);
             graph12Temp.forEach((key, val) -> {
@@ -824,6 +830,7 @@ public class FileServicesImpl extends BaseService {
         allList.forEach((list) -> {
             delete(list.getId());
         });
+        specialDao.deleteAll();
         String targetOutPath = OUT_PATH;
         String targetInputPath = INPUT_PATH;
         delFile(new File(targetOutPath));
@@ -869,20 +876,19 @@ public class FileServicesImpl extends BaseService {
         namoSunFile.setOriName(file.getOriginalFilename());
         namoSunFile.setUserId(cookie);
         fileDao.save(namoSunFile);
-        return ResponseResult.SUCCESS().setData(fileId);
+        return ResponseResult.SUCCESS().setData(namoSunFile);
     }
 
     public ResponseResult uploadGFF(MultipartFile file, String fileId) {
         if (file == null) {
             return ResponseResult.FAILED("上传失败，上传数据为空");
         }
-        System.out.println(file.getContentType());
         String cookie = CookieUtils.getCookie(getRequest(), ConstantUtils.NAMO_SUM_KEY);
         if (cookie == null) {
             return ResponseResult.FAILED("没有登入错误");
         }
-        if (TextUtils.isEmpty(file.getName())) {
-            return ResponseResult.FAILED("文件名为空错误");
+        if (fileDao.findOneById(fileId) == null) {
+            return ResponseResult.FAILED("文件不存在");
         }
         try {
             String targetPath = INPUT_PATH + File.separator + fileId + File.separator + file.getOriginalFilename();
@@ -895,34 +901,72 @@ public class FileServicesImpl extends BaseService {
         } catch (Exception e) {
             return ResponseResult.FAILED("系统异常，上传失败");
         }
-        return ResponseResult.SUCCESS();
+
+        List<Species> allByFileId = specialDao.findAllByFileId(fileId);
+        boolean flag = false;
+        for (Species speciesItem : allByFileId) {
+            if (speciesItem.getSpeciesName().equals(file.getOriginalFilename())) {
+                flag = true;
+                break;
+            }
+        }
+        //不存在就创建
+        Species species = new Species();
+        if (!flag) {
+            species.setId(idWorker.nextId() + "");
+            species.setFileId(fileId);
+            species.setSpeciesName(file.getOriginalFilename());
+            specialDao.save(species);
+        }
+        return ResponseResult.SUCCESS().setData(species);
+    }
+
+    public ResponseResult getGFFList(String fileId) {
+        return ResponseResult.SUCCESS().setData(specialDao.findAllByFileId(fileId));
     }
 
     public ResponseResult submitGFF(String fileId,
-                                    String countNum,
-                                    String animalName,
+                                    String cycleLengthThreshold,
+                                    String dustLengthThreshold,
                                     Integer size) {
         if (size == null || size == 0) size = 4;
         String orthogroups;
         List<String> genomes = new ArrayList<>();
-        List<String> splitCrossByAnimalName = TextUtils.splitCross(animalName);
+        List<String> splitCrossByAnimalName = new ArrayList<>();
+        //        List<String> splitCrossByAnimalName = TextUtils.splitCross(animalName);
         if (fileDao.findOneById(fileId) == null) {
-            return ResponseResult.FAILED("不存在");
+            return ResponseResult.FAILED("File does not exist");
+        }
+        List<Species> allByFileId = specialDao.findAllByFileId(fileId);
+        if(allByFileId.size()==0){
+            return ResponseResult.FAILED("The GFF file is not uploaded");
+        }
+        if(allByFileId.size()==1){
+            return ResponseResult.FAILED("At least 2 species");
+        }
+        StringBuilder animalName = new StringBuilder();
+        for (Species species : allByFileId) {
+            String speciesItemName = TextUtils.splitPoint(species.getSpeciesName()).get(0);
+            animalName.append(speciesItemName);
+            if (allByFileId.indexOf(species) != allByFileId.size() - 1) {
+                animalName.append("-");
+            }
+            splitCrossByAnimalName.add(speciesItemName);
         }
         try {
             File OrthogroupsFile = new File(INPUT_PATH + File.separator + fileId + File.separator + "Orthogroups.tsv");
             if (!OrthogroupsFile.exists())
-                return ResponseResult.FAILED("Orthogroups未上传");
+                return ResponseResult.FAILED("TSV file is not uploaded");
             orthogroups = readFile(OrthogroupsFile);
             for (String animalGenome : splitCrossByAnimalName) {
                 File genomeFile = new File(INPUT_PATH + File.separator + fileId + File.separator + animalGenome + ".gff");
                 if (!genomeFile.exists())
-                    return ResponseResult.FAILED("文件与物种不匹配");
+                    return ResponseResult.FAILED("File does not match species");
                 genomes.add(readFile(genomeFile));
             }
         } catch (IOException e) {
             e.printStackTrace();
-            return ResponseResult.FAILED("打开文件失败");
+            return ResponseResult.FAILED("Failed to open file");
         }
         List<String> splitEnter = TextUtils.splitEnter(orthogroups);
         Map<String, Integer> tempHashMap = new HashMap<>();
@@ -953,28 +997,49 @@ public class FileServicesImpl extends BaseService {
             tempHashMap.clear();
         }
         List<List<String>> sequence = new ArrayList<>();
+        StringBuilder countNum = new StringBuilder();
+        int allCount = 0;
         for (String genome : genomes) {
-            sequence.addAll(readGFF(genome, resultHashMap));
+            List<List<String>> GFFlist = readGFF(genome, resultHashMap);
+            countNum.append(GFFlist.size());
+            if (genomes.indexOf(genome) != genomes.size() - 1) {
+                countNum.append("-");
+            }
+            sequence.addAll(GFFlist);
+            for (List<String> gffListItem : GFFlist) {
+                allCount += gffListItem.size();
+            }
         }
-        //TODO:打散,简化
+        //保存到数据库
+        NamoSunUser oneById = fileDao.findOneById(fileId);
+        oneById.setAnimalName(animalName.toString());
+        oneById.setCountNum(countNum.toString());
+        fileDao.save(oneById);
         StringBuilder stringBuilder = new StringBuilder();
+        double step = 1;
+        if (allCount > simpleSize) {
+             step = new BigDecimal((float) simpleSize / allCount).doubleValue();
+        }
+        Random random = new Random();
         for (List<String> chroms : sequence) {
             for (String chrom : chroms) {
-                stringBuilder.append(chrom);
-                if (chroms.indexOf(chrom) != chroms.size() - 1) {
-                    stringBuilder.append(" ");
+                if (random.nextDouble() < step) {
+                    stringBuilder.append(chrom);
+                    if (chroms.indexOf(chrom) != chroms.size() - 1) {
+                        stringBuilder.append(" ");
+                    }
                 }
             }
             if (sequence.indexOf(chroms) != sequence.size() - 1) {
                 stringBuilder.append("\r\n");
             }
-
         }
         try {
             stringWriteToFile(INPUT_PATH + File.separator + fileId + ".sequence", stringBuilder.toString());
         } catch (IOException e) {
             return ResponseResult.FAILED("写入失败");
         }
+        submit(fileId, cycleLengthThreshold, dustLengthThreshold, oneById.getCountNum(), oneById.getAnimalName());
         return ResponseResult.SUCCESS();
     }
 
@@ -1000,5 +1065,23 @@ public class FileServicesImpl extends BaseService {
         result.add(nowList);
 
         return result;
+    }
+
+    public ResponseResult deleteGFF(String id) {
+        Species oneById = specialDao.findOneById(id);
+        if (oneById != null) {
+            specialDao.deleteById(id);
+        }
+        return ResponseResult.SUCCESS();
+    }
+
+    public ResponseResult getOrthogroups(String fileId) {
+        NamoSunUser oneById = fileDao.findOneById(fileId);
+        return ResponseResult.SUCCESS().setData(oneById);
+    }
+
+    public ResponseResult calculateGFF(String id, String cycleLengthThreshold, String dustLengthThreshold) {
+        NamoSunUser oneById = fileDao.findOneById(id);
+        return calculate(id, cycleLengthThreshold, dustLengthThreshold, oneById.getCountNum(), oneById.getAnimalName());
     }
 }

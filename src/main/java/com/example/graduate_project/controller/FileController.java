@@ -26,9 +26,27 @@ public class FileController {
     }
 
     @PostMapping(value = "/uploadGFF")
-    public ResponseResult uploadGFF(@RequestParam("file") MultipartFile uploadFile, @RequestParam("fileId") String fileId) {
+    public ResponseResult uploadGFF(@RequestParam("file") MultipartFile uploadFile,
+                                    @RequestParam("fileId") String fileId) {
         return fileService.uploadGFF(uploadFile, fileId);
     }
+
+    @GetMapping(value = "/getGFFList")
+    public ResponseResult getGFFList(@RequestParam("fileId") String fileId) {
+        return fileService.getGFFList(fileId);
+    }
+
+    @GetMapping(value = "/getOrthogroups")
+    public ResponseResult getOrthogroups(@RequestParam("fileId") String fileId) {
+        return fileService.getOrthogroups(fileId);
+    }
+
+    @GetMapping(value = "/deleteGFF")
+    public ResponseResult deleteGFF(@RequestParam("id") String id) {
+        return fileService.deleteGFF(id);
+    }
+
+
 
     @CheckTooFrequentCommit
     @CrossOrigin(origins = "*", maxAge = 3600)
@@ -39,6 +57,12 @@ public class FileController {
                                     @RequestParam(value = "countNum") String countNum,
                                     @RequestParam(value = "animalName") String animalName) {
         return fileService.calculate(id, cycleLengthThreshold, dustLengthThreshold, countNum, animalName);
+    }
+    @GetMapping(value = "/calculateGFF")
+    public ResponseResult calculateGFF(@RequestParam(value = "id") String id,
+                                    @RequestParam(value = "cycleLengthThreshold") String cycleLengthThreshold,
+                                    @RequestParam(value = "dustLengthThreshold") String dustLengthThreshold) {
+        return fileService.calculateGFF(id, cycleLengthThreshold, dustLengthThreshold);
     }
 
     @GetMapping(value = "/submit")
@@ -52,10 +76,10 @@ public class FileController {
 
     @GetMapping(value = "/submitGFF")
     public ResponseResult submitGFF(@RequestParam(value = "id") String id,
-                                    @RequestParam(value = "countNum") String countNum,
-                                    @RequestParam(value = "animalName") String animalName,
+                                    @RequestParam(value = "cycleLengthThreshold") String cycleLengthThreshold,
+                                    @RequestParam(value = "dustLengthThreshold") String dustLengthThreshold,
                                     @RequestParam(value = "size", required = false) Integer size) {
-        return fileService.submitGFF(id, countNum, animalName, size);
+        return fileService.submitGFF(id,cycleLengthThreshold,dustLengthThreshold,size);
     }
 
     @GetMapping(value = "/delete")

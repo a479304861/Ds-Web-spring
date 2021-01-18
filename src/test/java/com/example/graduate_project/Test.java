@@ -5,6 +5,7 @@ import com.example.graduate_project.utiles.RunExeUtils;
 import com.example.graduate_project.utiles.TextUtils;
 
 import java.io.*;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -20,61 +21,77 @@ public class Test {
     public static final String PROGRAM_OLD = "G:\\桌面\\毕设\\drimm\\drimm\\bin\\Release\\netcoreapp2.1\\win-x64\\drimm.exe";
 
     public static void main(String[] args) {
-        ExecutorService cachedThreadPool = Executors.newCachedThreadPool();
-        for (int k = 23; k < 100; k++) {
-            int temp = k + 1;
-            System.out.println("次数:" + temp);
-            int cycleLengthThreshold = new Random().nextInt(80) + 20;
-            int dustLengthThreshold = 20;
-            CountDownLatch cdl = new CountDownLatch(2);
-            int input = new Random().nextInt(3) + 1;
-            System.out.println("input--->" + input + "    cycleLengthThreshold--->" + cycleLengthThreshold);
-            cachedThreadPool.execute(() -> {
-                run(PROGRAM_NEW, input, cycleLengthThreshold, dustLengthThreshold);
-                cdl.countDown();
-            });
-            cachedThreadPool.execute(() -> {
-                run(PROGRAM_OLD, input, cycleLengthThreshold, dustLengthThreshold);
-                cdl.countDown();
-            });
+        Random random = new Random();
+        int count = 500;
+        int all = 1000;
+        double step = new BigDecimal((float) count / all).doubleValue();
 
-            try {
-                cdl.await();
-            } catch (InterruptedException ignored) {
+        System.out.println(step);
+        int size=0;
+        for (int i = 0; i < 100000; i++) {
+            if(random.nextDouble()<step){
+                size++;
             }
-            try {
-                List<List<String>> blocksListListOld = getBlockList(input + "_old");       //处理blockList
-                List<List<String>> blocksListListNew = getBlockList(input + "_new");       //处理blockList
-                List<List<String>> synListListNew = getSynList(input + "_new", new ArrayList<>());       //处理blockList
-                List<List<String>> synListListOld = getSynList(input + "_old", new ArrayList<>());       //处理blockList
-                System.out.println("blocksOld.size：" + blocksListListOld.size() + "    blocksNew.size：" + blocksListListNew.size());
-                System.out.println("synOld.size：" + synListListOld.size() + "     synNew.size：" + synListListNew.size());
-                boolean success = true;
-                for (int i = 0; i < blocksListListNew.size(); i++) {
-                    for (int j = 0; j < blocksListListNew.get(i).size(); j++) {
-                        if (!blocksListListNew.get(i).get(j).equals(blocksListListOld.get(i).get(j))) {
-                            success = false;
-                            break;
-                        }
-                    }
-                }
-                for (int i = 0; i < synListListNew.size(); i++) {
-                    for (int j = 0; j < synListListNew.get(i).size(); j++) {
-                        if (!synListListNew.get(i).get(j).equals(synListListOld.get(i).get(j))) {
-                            success = false;
-                            break;
-                        }
-                    }
-
-                }
-                System.out.println("是否相同--->" + success);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
         }
+        System.out.println(size);
 
     }
+//    public static void main(String[] args) {
+//        ExecutorService cachedThreadPool = Executors.newCachedThreadPool();
+//        for (int k = 23; k < 100; k++) {
+//            int temp = k + 1;
+//            System.out.println("次数:" + temp);
+//            int cycleLengthThreshold = new Random().nextInt(80) + 20;
+//            int dustLengthThreshold = 20;
+//            CountDownLatch cdl = new CountDownLatch(2);
+//            int input = new Random().nextInt(3) + 1;
+//            System.out.println("input--->" + input + "    cycleLengthThreshold--->" + cycleLengthThreshold);
+//            cachedThreadPool.execute(() -> {
+//                run(PROGRAM_NEW, input, cycleLengthThreshold, dustLengthThreshold);
+//                cdl.countDown();
+//            });
+//            cachedThreadPool.execute(() -> {
+//                run(PROGRAM_OLD, input, cycleLengthThreshold, dustLengthThreshold);
+//                cdl.countDown();
+//            });
+//
+//            try {
+//                cdl.await();
+//            } catch (InterruptedException ignored) {
+//            }
+//            try {
+//                List<List<String>> blocksListListOld = getBlockList(input + "_old");       //处理blockList
+//                List<List<String>> blocksListListNew = getBlockList(input + "_new");       //处理blockList
+//                List<List<String>> synListListNew = getSynList(input + "_new", new ArrayList<>());       //处理blockList
+//                List<List<String>> synListListOld = getSynList(input + "_old", new ArrayList<>());       //处理blockList
+//                System.out.println("blocksOld.size：" + blocksListListOld.size() + "    blocksNew.size：" + blocksListListNew.size());
+//                System.out.println("synOld.size：" + synListListOld.size() + "     synNew.size：" + synListListNew.size());
+//                boolean success = true;
+//                for (int i = 0; i < blocksListListNew.size(); i++) {
+//                    for (int j = 0; j < blocksListListNew.get(i).size(); j++) {
+//                        if (!blocksListListNew.get(i).get(j).equals(blocksListListOld.get(i).get(j))) {
+//                            success = false;
+//                            break;
+//                        }
+//                    }
+//                }
+//                for (int i = 0; i < synListListNew.size(); i++) {
+//                    for (int j = 0; j < synListListNew.get(i).size(); j++) {
+//                        if (!synListListNew.get(i).get(j).equals(synListListOld.get(i).get(j))) {
+//                            success = false;
+//                            break;
+//                        }
+//                    }
+//
+//                }
+//                System.out.println("是否相同--->" + success);
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+//
+//        }
+//
+//    }
 
 
     public static void run(String PROGRAM, int input, int cycleLengthThreshold, int dustLengthThreshold) {

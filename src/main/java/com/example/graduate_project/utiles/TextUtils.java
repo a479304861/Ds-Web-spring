@@ -55,6 +55,11 @@ public class TextUtils {
         return new ArrayList<>(Arrays.asList(split));
     }
 
+    public static List<String> splitPoint(String s) {
+        String[] split = s.split("\\.");
+        return new ArrayList<>(Arrays.asList(split));
+    }
+
     public static boolean isEmpty(String s) {
         return s == null || s.length() == 0;
     }
