@@ -2,7 +2,7 @@ package com.example.graduate_project.controller;
 
 import com.example.graduate_project.dao.enity.ResponseResult;
 import com.example.graduate_project.interceptor.CheckTooFrequentCommit;
-import com.example.graduate_project.service.impl.FileServicesImpl;
+import com.example.graduate_project.service.impl.DsWebServicesImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -11,7 +11,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class FileController {
 
     @Autowired
-    private FileServicesImpl fileService;
+    private DsWebServicesImpl fileService;
 
     @CheckTooFrequentCommit
     @CrossOrigin(origins = "*", maxAge = 3600)
@@ -59,10 +59,8 @@ public class FileController {
         return fileService.calculate(id, cycleLengthThreshold, dustLengthThreshold, countNum, animalName);
     }
     @GetMapping(value = "/calculateGFF")
-    public ResponseResult calculateGFF(@RequestParam(value = "id") String id,
-                                    @RequestParam(value = "cycleLengthThreshold") String cycleLengthThreshold,
-                                    @RequestParam(value = "dustLengthThreshold") String dustLengthThreshold) {
-        return fileService.calculateGFF(id, cycleLengthThreshold, dustLengthThreshold);
+    public ResponseResult calculateGFF(@RequestParam(value = "id") String id) {
+        return fileService.calculateGFF(id);
     }
 
     @GetMapping(value = "/submit")
@@ -100,7 +98,7 @@ public class FileController {
 
     @GetMapping("/download")
     public void download(@RequestParam(value = "id", required = false) String fileId) {
-        fileService.downloadFile(fileId);
+        fileService.downloadData(fileId);
     }
 
     @GetMapping("/downloadProgram")

@@ -30,10 +30,10 @@ spring:
   main:
     allow-bean-definition-overriding: true
 
-Namosun.graduate.file.save-path: E:\学习资料\IjDemo\graduate_project\file
-Namosun.graduate.program-path:  G:\桌面\毕设\linuxProd\drimm\bin\Release\netcoreapp2.1\win-x64\drimm.exe
-Namosun.graduate.program-download-path: E:\学习资料\IjDemo\graduate_project\program.zip
-Namosun.graduate.out-path: G:\桌面\毕设\output
+Namosun.graduate.file.save-path: D:\code\IjDemo\graduate_project\file
+Namosun.graduate.program-path:  D:\code\program\drimmCode\drimm\bin\Release\netcoreapp2.1\win-x64\drimm.exe
+Namosun.graduate.out-path: D:\code\IjDemo\graduate_project\output
+Namosun.graduate.program-download-path: C:\Users\a4793\Desktop\Program.zip
 Namosun.graduate.isLinux: false
 Namosun.graduate.domain: localhost
 

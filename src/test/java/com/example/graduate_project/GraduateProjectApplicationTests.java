@@ -1,33 +1,29 @@
 package com.example.graduate_project;
 
-import com.example.graduate_project.utiles.TextUtils;
-import org.springframework.boot.test.context.SpringBootTest;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
 
-@SpringBootTest
+
 class GraduateProjectApplicationTests {
 
     public static final int size = 4;
+    public static final String id = "801140415326584832";
 
     public static void main(String[] args) throws IOException {
-        String Orthogroups = readFile(new File("G:\\桌面\\毕设\\input\\Orthogroups.tsv"));
-        List<String> splitEnter = TextUtils.splitEnter(Orthogroups);
-        List<List<List<String>>> orthoList = new ArrayList<>();
+        String Orthogroups = readFile(new File("/namosun/input/" + id + "/Orthogroups.tsv"));
+        List<String> splitEnter = splitEnter(Orthogroups);
         Map<String, Integer> tempHashMap = new HashMap<>();
-        int nowIndex = 0;
-        for (int i = 0; i < splitEnter.size(); i++) {
+        Map<String, Integer> resultHashMap = new HashMap<>();
+        int nowIndex = 1;
+        int orthoListSize = splitTab(splitEnter.get(0)).size();
+        for (int i = 1; i < splitEnter.size(); i++) {
             List<String> splitTab = splitTab(splitEnter.get(i));
-            List<List<String>> arrayLists = new ArrayList<>();
-            List<String> first = new ArrayList<>();
-            first.add(splitTab.get(0));
-            arrayLists.add(first);
-            for (int j = 1; j < splitTab.size(); j++) {
-                if (splitTab.get(j).equals("")) {
+            int count = 1;
+            for (int j = 1; j < splitTab.size(); j++) { //判断是否有3个，且每个基因数量不大于size
+                if (isEmpty(splitTab.get(j))) {
                     break;
                 }
                 List<String> splitComma = splitComma(splitTab.get(j));
@@ -37,24 +33,27 @@ class GraduateProjectApplicationTests {
                 for (String item : splitComma) {
                     tempHashMap.put(item, nowIndex);
                 }
-                arrayLists.add(splitComma);
+                count++;
             }
-            if (i == 0 || arrayLists.size() == orthoList.get(0).size()) {
-                orthoList.add(arrayLists);
+            if (count == orthoListSize) {
+                resultHashMap.putAll(tempHashMap);
+                tempHashMap.forEach((key, val) -> {
+                    System.out.println(key+":"+val);
+                });
                 nowIndex++;
             }
+            tempHashMap.clear();
         }
 
-        //TODO:修改成冲数据库中读取
-        String PR_genome = readFile(new File("G:\\桌面\\毕设\\input\\PR_genome.gff"));
-        String PS_genome = readFile(new File("G:\\桌面\\毕设\\input\\PS_genome.gff"));
-        String PT_genome = readFile(new File("G:\\桌面\\毕设\\input\\PT_genome.gff"));
-        List<List<String>> PR_genomeList = readGFF(PR_genome, tempHashMap);
-        List<List<String>> PS_genomeList = readGFF(PS_genome, tempHashMap);
-        List<List<String>> PT_genomeList = readGFF(PT_genome, tempHashMap);
-        PT_genomeList.addAll(PS_genomeList);
-        PT_genomeList.addAll(PR_genomeList);
-        System.out.println(PT_genomeList.size());
+//        String PR_genome = readFile(new File("/namosun/input/801116626962350080/PR_genome.gff"));
+//        String PS_genome = readFile(new File("/namosun/input/801116626962350080/PS_genome.gff"));
+//        String PT_genome = readFile(new File("/namosun/input/801116626962350080/PT_genome.gff"));
+//        List<List<String>> PR_genomeList = readGFF(PR_genome, resultHashMap);
+//        List<List<String>> PS_genomeList = readGFF(PS_genome, resultHashMap);
+//        List<List<String>> PT_genomeList = readGFF(PT_genome, resultHashMap);
+//        PT_genomeList.addAll(PS_genomeList);
+//        PT_genomeList.addAll(PR_genomeList);
+
 
     }
 
@@ -83,9 +82,17 @@ class GraduateProjectApplicationTests {
         return result;
     }
 
+    public static List<String> splitEnter(String s) {
+        String[] split;
+        {
+            split = s.split("\\r\\n");
+        }
+        return new ArrayList<>(Arrays.asList(split));
+    }
+
     public static List<String> splitComma(String s) {
         String[] split;
-        split = s.split(",");
+        split = s.split(", ");
         return new ArrayList<>(Arrays.asList(split));
     }
 
@@ -95,11 +102,30 @@ class GraduateProjectApplicationTests {
         return new ArrayList<>(Arrays.asList(split));
     }
 
-    public static List<String> splitEnter(String s) {
-        String[] split;
-        split = s.split("\\r\\n");
+    public static List<String> splitCross(String s) {
+        String[] split = s.split("-");
         return new ArrayList<>(Arrays.asList(split));
     }
+
+    public static List<String> splitSpace(String s) {
+        String[] split = s.split(" ");
+        return new ArrayList<>(Arrays.asList(split));
+    }
+
+    public static List<String> splitColon(String s) {
+        String[] split = s.split(":");
+        return new ArrayList<>(Arrays.asList(split));
+    }
+
+    public static List<String> splitPoint(String s) {
+        String[] split = s.split("\\.");
+        return new ArrayList<>(Arrays.asList(split));
+    }
+
+    public static boolean isEmpty(String s) {
+        return s == null || s.equals("\r") || s.length() < 3;
+    }
+
 
     private static String readFile(File file) throws IOException {
         try {

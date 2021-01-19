@@ -1,12 +1,8 @@
 
 package com.example.graduate_project;
-import com.example.graduate_project.service.impl.FileServicesImpl;
 import com.example.graduate_project.utiles.RedisUtil;
 import com.example.graduate_project.utiles.SnowflakeIdWorker;
 import com.google.gson.Gson;
-import org.mapstruct.Mapper;
-import org.mybatis.spring.annotation.MapperScan;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
@@ -14,6 +10,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import springfox.documentation.swagger2.annotations.EnableSwagger2;
+
 
 import java.util.Random;
 
