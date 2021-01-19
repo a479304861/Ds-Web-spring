@@ -6,7 +6,7 @@ import java.util.List;
 
 public class Result {
     private  List<Graph3.Graph3Node> graph3;
-    private List<Integer> graph11;
+
     private List<Pair<String,Integer>> graph12;
     private List<List<String>> blocks;
     private List<String> animalName;
@@ -21,13 +21,6 @@ public class Result {
         this.graph3 = graph3;
     }
 
-    public List<Integer> getGraph11() {
-        return graph11;
-    }
-
-    public void setGraph11(List<Integer> graph11) {
-        this.graph11 = graph11;
-    }
 
     public List<Pair<String, Integer>> getGraph12() {
         return graph12;
@@ -38,14 +31,13 @@ public class Result {
     }
 
     public Result(List<List<String>> blocks, List<String> animalName, List<String> countNum,
-                  List<String> splitChoseAnimalName, List<Pair<String, Integer>> graph12, List<Integer> graph11, List<Graph3.Graph3Node> graph3) {
+                  List<String> splitChoseAnimalName, List<Pair<String, Integer>> graph12, List<Graph3.Graph3Node> graph3) {
 
         this.blocks = blocks;
         this.animalName = animalName;
         this.countNum = countNum;
         this.splitChoseAnimalName = splitChoseAnimalName;
         this.graph12 = graph12;
-        this.graph11 = graph11;
         this.graph3 =graph3;
     }
 

@@ -42,8 +42,8 @@ spring:
 
 
 Namosun.graduate.file.save-path: /namosun/input
-Namosun.graduate.program-path: /namosun/Program.exe
-Namosun.graduate.program-download-path: /namosun/Program.zip
+Namosun.graduate.program-path: /namosun/programForWin/win-x64//drimm.dll
+Namosun.graduate.program-download-path: /namosun/Program.7z
 Namosun.graduate.out-path: /namosun/output
 Namosun.graduate.isLinux: true
 Namosun.graduate.domain: 47.111.13.56

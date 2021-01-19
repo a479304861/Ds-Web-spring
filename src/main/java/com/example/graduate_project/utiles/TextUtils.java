@@ -28,6 +28,12 @@ public class TextUtils {
         return new ArrayList<>(Arrays.asList(split));
     }
 
+    public static List<String> splitEnterLinux(String s) {
+        String[] split;
+        split = s.split("\\r\\n");
+        return new ArrayList<>(Arrays.asList(split));
+    }
+
     public static List<String> splitComma(String s) {
         String[] split;
         split = s.split(", ");
